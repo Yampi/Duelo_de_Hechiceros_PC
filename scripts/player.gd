@@ -2,6 +2,7 @@ extends CharacterBody3D
 
 const MapConfig = preload("res://scripts/map_config.gd")
 const CursorManager = preload("res://scripts/ui/cursor_manager.gd")
+const CharacterAppearance = preload("res://scripts/character_appearance.gd")
 
 signal spell_changed(slot: int)
 signal health_updated(current: float, max_val: float)
@@ -85,40 +86,8 @@ func _ready() -> void:
 	emit_signal("stamina_updated", current_stamina, max_stamina)
 
 func _apply_wizard_materials() -> void:
-	# Configure Quaternius Wizard character materials and textures
-	var wiz_tex = load("res://assets/characters/wizard/Wizard_Texture.png")
-	var staff_tex = load("res://assets/characters/wizard/Wizard_Staff_Texture.png")
-	
-	if wiz_tex:
-		var wizard_mat = StandardMaterial3D.new()
-		wizard_mat.albedo_texture = wiz_tex
-		wizard_mat.roughness = 0.65
-		wizard_mat.rim_enabled = true
-		wizard_mat.rim = 0.5
-		wizard_mat.rim_tint = 0.3
-		
-		var staff_mat = StandardMaterial3D.new()
-		if staff_tex:
-			staff_mat.albedo_texture = staff_tex
-		staff_mat.roughness = 0.5
-		
-		for child in find_children("*", "MeshInstance3D", true, false):
-			if child.name == "Wizard_Staff":
-				child.material_override = staff_mat
-			elif child.name.begins_with("Wizard") or child.name in ["Face", "ShoulderPad_L", "ShoulderPad_R", "Pouch"]:
-				child.material_override = wizard_mat
-	
-	# Mannequin fallback
-	var robe_mat = StandardMaterial3D.new()
-	robe_mat.albedo_color = Color(0.12, 0.22, 0.65) # Cornelius Royal Velvet Blue
-	robe_mat.roughness = 0.55
-	robe_mat.rim_enabled = true
-	robe_mat.rim = 0.65
-	robe_mat.rim_tint = 0.4
-	
-	var mannequin = find_child("Mannequin", true, false) as MeshInstance3D
-	if mannequin:
-		mannequin.material_override = robe_mat
+	# Configure Quaternius Wizard materials and apply saved character customization
+	CharacterAppearance.apply_to_model(self)
 	
 	# Alias animations on anim_player if from Quaternius Wizard armature
 	if anim_player:

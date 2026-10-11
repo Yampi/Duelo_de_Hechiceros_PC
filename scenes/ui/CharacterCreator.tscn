@@ -1,0 +1,341 @@
+[gd_scene load_steps=10 format=3 uid="uid://character_creator_scene_01"]
+
+[ext_resource type="Script" path="res://scripts/ui/character_creator.gd" id="1_script"]
+[ext_resource type="Theme" uid="uid://fantasy_theme_duelo_01" path="res://assets/ui/FantasyTheme.tres" id="2_theme"]
+[ext_resource type="FontFile" path="res://assets/ui/fonts/Cinzel.ttf" id="3_cinzel"]
+[ext_resource type="Texture2D" path="res://assets/ui/frames/divider-000.png" id="4_divider"]
+[ext_resource type="PackedScene" path="res://assets/characters/wizard/WizardModel.tscn" id="5_model"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_modal"]
+bg_color = Color(0.04, 0.06, 0.09, 0.96)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.85, 0.72, 0.35, 0.85)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+content_margin_left = 20.0
+content_margin_top = 16.0
+content_margin_right = 20.0
+content_margin_bottom = 16.0
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_preview"]
+sky_top_color = Color(0.12, 0.16, 0.28, 1)
+sky_horizon_color = Color(0.2, 0.24, 0.35, 1)
+ground_bottom_color = Color(0.05, 0.07, 0.1, 1)
+ground_horizon_color = Color(0.15, 0.18, 0.25, 1)
+
+[sub_resource type="Sky" id="Sky_preview"]
+sky_material = SubResource("ProceduralSkyMaterial_preview")
+
+[sub_resource type="Environment" id="Environment_preview"]
+background_mode = 2
+sky = SubResource("Sky_preview")
+ambient_light_source = 2
+ambient_light_color = Color(0.45, 0.5, 0.65, 1)
+ambient_light_energy = 0.8
+tonemap_mode = 2
+glow_enabled = true
+glow_bloom = 0.2
+
+[node name="CharacterCreator" type="Control"]
+process_mode = 3
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_script")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.02, 0.03, 0.05, 0.88)
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="Center"]
+custom_minimum_size = Vector2(1040, 640)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_modal")
+
+[node name="VBox" type="VBoxContainer" parent="Center/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Header" type="VBoxContainer" parent="Center/Panel/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="Title" type="Label" parent="Center/Panel/VBox/Header"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.86, 0.5, 1)
+theme_override_fonts/font = ExtResource("3_cinzel")
+theme_override_font_sizes/font_size = 22
+text = "🧙 TALLER DE PERSONALIZACIÓN DEL HECHICERO"
+horizontal_alignment = 1
+
+[node name="Subtitle" type="Label" parent="Center/Panel/VBox/Header"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.75, 0.85, 0.9)
+theme_override_font_sizes/font_size = 12
+text = "Esculpe la apariencia, manto, linaje y resonancia arcana de tu personaje"
+horizontal_alignment = 1
+
+[node name="Divider" type="TextureRect" parent="Center/Panel/VBox/Header"]
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2
+texture = ExtResource("4_divider")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="MainContent" type="HBoxContainer" parent="Center/Panel/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 16
+
+[node name="LeftCol" type="VBoxContainer" parent="Center/Panel/VBox/MainContent"]
+custom_minimum_size = Vector2(440, 0)
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ViewportFrame" type="SubViewportContainer" parent="Center/Panel/VBox/MainContent/LeftCol"]
+custom_minimum_size = Vector2(440, 390)
+layout_mode = 2
+size_flags_vertical = 3
+stretch = true
+
+[node name="SubViewport" type="SubViewport" parent="Center/Panel/VBox/MainContent/LeftCol/ViewportFrame"]
+handle_input_locally = false
+size = Vector2i(440, 390)
+render_target_update_mode = 3
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="Center/Panel/VBox/MainContent/LeftCol/ViewportFrame/SubViewport"]
+environment = SubResource("Environment_preview")
+
+[node name="KeyLight" type="DirectionalLight3D" parent="Center/Panel/VBox/MainContent/LeftCol/ViewportFrame/SubViewport"]
+transform = Transform3D(0.866025, -0.25, 0.433013, 0, 0.866025, 0.5, -0.5, -0.433013, 0.75, 2, 3, 3)
+light_color = Color(1, 0.95, 0.85, 1)
+light_energy = 1.3
+
+[node name="FillLight" type="DirectionalLight3D" parent="Center/Panel/VBox/MainContent/LeftCol/ViewportFrame/SubViewport"]
+transform = Transform3D(-0.866025, 0.25, -0.433013, 0, 0.866025, 0.5, 0.5, 0.433013, -0.75, -2, 2, -2)
+light_color = Color(0.4, 0.6, 0.9, 1)
+light_energy = 0.6
+
+[node name="Camera3D" type="Camera3D" parent="Center/Panel/VBox/MainContent/LeftCol/ViewportFrame/SubViewport"]
+transform = Transform3D(1, 0, 0, 0, 0.984808, 0.173648, 0, -0.173648, 0.984808, 0, 1.25, 2.2)
+fov = 42.0
+
+[node name="Turntable" type="Node3D" parent="Center/Panel/VBox/MainContent/LeftCol/ViewportFrame/SubViewport"]
+
+[node name="WizardModel" parent="Center/Panel/VBox/MainContent/LeftCol/ViewportFrame/SubViewport/Turntable" instance=ExtResource("5_model")]
+transform = Transform3D(-0.0075, 0, 0, 0, 0.0075, 0, 0, 0, -0.0075, 0, 0, 0)
+
+[node name="RotControls" type="HBoxContainer" parent="Center/Panel/VBox/MainContent/LeftCol"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="BtnRotLeft" type="Button" parent="Center/Panel/VBox/MainContent/LeftCol/RotControls"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "↺ Girar Izq"
+
+[node name="BtnAutoRotate" type="Button" parent="Center/Panel/VBox/MainContent/LeftCol/RotControls"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Giro Auto: ON"
+
+[node name="BtnRotRight" type="Button" parent="Center/Panel/VBox/MainContent/LeftCol/RotControls"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Girar Der ↻"
+
+[node name="AnimControls" type="HBoxContainer" parent="Center/Panel/VBox/MainContent/LeftCol"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="BtnAnimIdle" type="Button" parent="Center/Panel/VBox/MainContent/LeftCol/AnimControls"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Reposo"
+
+[node name="BtnAnimCast" type="Button" parent="Center/Panel/VBox/MainContent/LeftCol/AnimControls"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Lanzar"
+
+[node name="BtnAnimRun" type="Button" parent="Center/Panel/VBox/MainContent/LeftCol/AnimControls"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Correr"
+
+[node name="BtnAnimHit" type="Button" parent="Center/Panel/VBox/MainContent/LeftCol/AnimControls"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Impacto"
+
+[node name="RightCol" type="VBoxContainer" parent="Center/Panel/VBox/MainContent"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="NameRow" type="HBoxContainer" parent="Center/Panel/VBox/MainContent/RightCol"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="LblName" type="Label" parent="Center/Panel/VBox/MainContent/RightCol/NameRow"]
+custom_minimum_size = Vector2(120, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.85, 0.6, 1)
+text = "Nombre del Mago:"
+
+[node name="EditName" type="LineEdit" parent="Center/Panel/VBox/MainContent/RightCol/NameRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Cornelius"
+placeholder_text = "Escribe el nombre de tu hechicero..."
+
+[node name="Scroll" type="ScrollContainer" parent="Center/Panel/VBox/MainContent/RightCol"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="OptionsBox" type="VBoxContainer" parent="Center/Panel/VBox/MainContent/RightCol/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 12
+
+[node name="SecRobe" type="VBoxContainer" parent="Center/Panel/VBox/MainContent/RightCol/Scroll/OptionsBox"]
+layout_mode = 2
+
+[node name="LblRobe" type="Label" parent="Center/Panel/VBox/MainContent/RightCol/Scroll/OptionsBox/SecRobe"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.82, 0.45, 1)
+text = "✦ Color de Túnica y Manto:"
+
+[node name="GridRobe" type="GridContainer" parent="Center/Panel/VBox/MainContent/RightCol/Scroll/OptionsBox/SecRobe"]
+layout_mode = 2
+columns = 3
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 6
+
+[node name="SecSkin" type="VBoxContainer" parent="Center/Panel/VBox/MainContent/RightCol/Scroll/OptionsBox"]
+layout_mode = 2
+
+[node name="LblSkin" type="Label" parent="Center/Panel/VBox/MainContent/RightCol/Scroll/OptionsBox/SecSkin"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.82, 0.45, 1)
+text = "✦ Tez y Rasgos Faciales:"
+
+[node name="GridSkin" type="GridContainer" parent="Center/Panel/VBox/MainContent/RightCol/Scroll/OptionsBox/SecSkin"]
+layout_mode = 2
+columns = 3
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 6
+
+[node name="SecEyes" type="VBoxContainer" parent="Center/Panel/VBox/MainContent/RightCol/Scroll/OptionsBox"]
+layout_mode = 2
+
+[node name="LblEyes" type="Label" parent="Center/Panel/VBox/MainContent/RightCol/Scroll/OptionsBox/SecEyes"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.82, 0.45, 1)
+text = "✦ Mirada y Resonancia Ocular:"
+
+[node name="GridEyes" type="GridContainer" parent="Center/Panel/VBox/MainContent/RightCol/Scroll/OptionsBox/SecEyes"]
+layout_mode = 2
+columns = 3
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 6
+
+[node name="SecTrim" type="VBoxContainer" parent="Center/Panel/VBox/MainContent/RightCol/Scroll/OptionsBox"]
+layout_mode = 2
+
+[node name="LblTrim" type="Label" parent="Center/Panel/VBox/MainContent/RightCol/Scroll/OptionsBox/SecTrim"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.82, 0.45, 1)
+text = "✦ Hombreras y Metales Rúnicos:"
+
+[node name="GridTrim" type="GridContainer" parent="Center/Panel/VBox/MainContent/RightCol/Scroll/OptionsBox/SecTrim"]
+layout_mode = 2
+columns = 3
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 6
+
+[node name="SecGem" type="VBoxContainer" parent="Center/Panel/VBox/MainContent/RightCol/Scroll/OptionsBox"]
+layout_mode = 2
+
+[node name="LblGem" type="Label" parent="Center/Panel/VBox/MainContent/RightCol/Scroll/OptionsBox/SecGem"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.82, 0.45, 1)
+text = "✦ Gema del Bastón y Aura:"
+
+[node name="GridGem" type="GridContainer" parent="Center/Panel/VBox/MainContent/RightCol/Scroll/OptionsBox/SecGem"]
+layout_mode = 2
+columns = 3
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 6
+
+[node name="SecExpr" type="VBoxContainer" parent="Center/Panel/VBox/MainContent/RightCol/Scroll/OptionsBox"]
+layout_mode = 2
+
+[node name="LblExpr" type="Label" parent="Center/Panel/VBox/MainContent/RightCol/Scroll/OptionsBox/SecExpr"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.82, 0.45, 1)
+text = "✦ Porte Arcano y Semblante:"
+
+[node name="VBoxExpr" type="VBoxContainer" parent="Center/Panel/VBox/MainContent/RightCol/Scroll/OptionsBox/SecExpr"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="StatusRow" type="HBoxContainer" parent="Center/Panel/VBox"]
+layout_mode = 2
+
+[node name="LblStatus" type="Label" parent="Center/Panel/VBox/StatusRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 13
+horizontal_alignment = 1
+
+[node name="ActionsRow" type="HBoxContainer" parent="Center/Panel/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="BtnRandom" type="Button" parent="Center/Panel/VBox/ActionsRow"]
+custom_minimum_size = Vector2(130, 42)
+layout_mode = 2
+text = "🎲 Aleatorio"
+
+[node name="BtnReset" type="Button" parent="Center/Panel/VBox/ActionsRow"]
+custom_minimum_size = Vector2(130, 42)
+layout_mode = 2
+text = "↺ Por Defecto"
+
+[node name="Spacer" type="Control" parent="Center/Panel/VBox/ActionsRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="BtnSave" type="Button" parent="Center/Panel/VBox/ActionsRow"]
+custom_minimum_size = Vector2(180, 42)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.86, 0.5, 1)
+text = "💾 Guardar Apariencia"
+
+[node name="BtnBack" type="Button" parent="Center/Panel/VBox/ActionsRow"]
+custom_minimum_size = Vector2(150, 42)
+layout_mode = 2
+text = "✕ Volver al Menú"

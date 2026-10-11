@@ -2,6 +2,8 @@ extends Control
 
 const SettingsManager = preload("res://scripts/settings_manager.gd")
 const UIConstants = preload("res://scripts/ui/ui_constants.gd")
+const CharacterAppearance = preload("res://scripts/character_appearance.gd")
+const CharacterCreator = preload("res://scripts/ui/character_creator.gd")
 
 @onready var title_label: Label = find_child("Title", true, false)
 @onready var subtitle_label: Label = find_child("Subtitle", true, false)
@@ -10,6 +12,7 @@ const UIConstants = preload("res://scripts/ui/ui_constants.gd")
 
 @onready var btn_play: Button = find_child("BtnPlay", true, false)
 @onready var btn_grimoire: Button = find_child("BtnGrimoire", true, false)
+@onready var btn_character: Button = find_child("BtnCharacter", true, false)
 @onready var btn_settings: Button = find_child("BtnSettings", true, false)
 @onready var btn_credits: Button = find_child("BtnCredits", true, false)
 @onready var btn_quit: Button = find_child("BtnQuit", true, false)
@@ -21,6 +24,7 @@ const UIConstants = preload("res://scripts/ui/ui_constants.gd")
 
 @onready var settings_modal: Control = find_child("SettingsModal", true, false)
 @onready var grimoire_modal: Control = find_child("GrimoireModal", true, false)
+@onready var character_creator: Control = find_child("CharacterCreator", true, false)
 @onready var credits_modal: Control = find_child("CreditsModal", true, false)
 @onready var btn_close_credits: Button = find_child("BtnCloseCredits", true, false)
 
@@ -43,6 +47,7 @@ func _ready() -> void:
 
 func _setup_3d_wizard() -> void:
 	if wizard_model:
+		CharacterAppearance.apply_to_model(wizard_model)
 		var anim = wizard_model.find_child("AnimationPlayer", true, false) as AnimationPlayer
 		if anim:
 			if anim.has_animation("CharacterArmature|Idle"):
@@ -55,6 +60,8 @@ func _connect_buttons() -> void:
 		btn_play.pressed.connect(_show_mode_selection)
 	if btn_grimoire:
 		btn_grimoire.pressed.connect(_on_grimoire_pressed)
+	if btn_character:
+		btn_character.pressed.connect(_on_character_pressed)
 	if btn_settings:
 		btn_settings.pressed.connect(_on_settings_pressed)
 	if btn_credits:
@@ -86,10 +93,25 @@ func _connect_buttons() -> void:
 		grimoire_modal.grimoire_closed.connect(func():
 			if btn_grimoire: btn_grimoire.grab_focus()
 		)
+	
+	if character_creator:
+		if character_creator.has_signal("creator_closed"):
+			character_creator.creator_closed.connect(func():
+				if btn_character: btn_character.grab_focus()
+			)
+		if character_creator.has_signal("appearance_saved"):
+			character_creator.appearance_saved.connect(func(_cfg):
+				if wizard_model:
+					CharacterAppearance.apply_to_model(wizard_model)
+			)
 
 func _on_grimoire_pressed() -> void:
 	if grimoire_modal and grimoire_modal.has_method("open_grimoire"):
 		grimoire_modal.open_grimoire()
+
+func _on_character_pressed() -> void:
+	if character_creator and character_creator.has_method("open_creator"):
+		character_creator.open_creator()
 
 func _animate_staggered_entrance() -> void:
 	if modes_panel:

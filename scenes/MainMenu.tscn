@@ -7,6 +7,7 @@
 [ext_resource type="Texture2D" path="res://assets/ui/frames/divider-000.png" id="5_divider"]
 [ext_resource type="PackedScene" uid="uid://settings_modal_scene_01" path="res://scenes/ui/SettingsModal.tscn" id="6_settings"]
 [ext_resource type="PackedScene" path="res://scenes/ui/GrimoireModal.tscn" id="7_grim"]
+[ext_resource type="PackedScene" path="res://scenes/ui/CharacterCreator.tscn" id="8_creator"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_menu"]
 sky_top_color = Color(0.12, 0.18, 0.32, 1)
@@ -204,6 +205,11 @@ custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 text = "📖 GRIMORIO"
 
+[node name="BtnCharacter" type="Button" parent="ContentContainer/MainNav"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+text = "🧙 PERSONALIZAR"
+
 [node name="BtnSettings" type="Button" parent="ContentContainer/MainNav"]
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
@@ -314,6 +320,10 @@ visible = false
 layout_mode = 1
 
 [node name="GrimoireModal" parent="." instance=ExtResource("7_grim")]
+visible = false
+layout_mode = 1
+
+[node name="CharacterCreator" parent="." instance=ExtResource("8_creator")]
 visible = false
 layout_mode = 1
 
