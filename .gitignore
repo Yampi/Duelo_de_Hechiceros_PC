@@ -1,0 +1,25 @@
+# Godot 4 .gitignore
+.godot/
+*.translation
+
+# Tools & Engine binaries
+tools/
+*.exe
+*.zip
+
+# Retro Reference Data / Disc Images (keep in place, do not track in git)
+C/
+CD/
+DOSBOX/
+*.img
+*.iso
+*.ccd
+*.sub
+*.cue
+
+# Captures and logs
+screenshots/
+docs/ui_captures/
+docs/vfx_captures/
+*.log
+*.tmp

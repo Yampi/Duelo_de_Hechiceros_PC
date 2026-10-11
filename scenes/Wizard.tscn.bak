@@ -1,0 +1,160 @@
+[gd_scene load_steps=18 format=3 uid="uid://wizard_cornelius_01"]
+
+[ext_resource type="Script" path="res://scripts/player.gd" id="1_wiz"]
+[ext_resource type="PackedScene" path="res://assets/characters/MageAnimated.glb" id="2_mage_model"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_wiz"]
+radius = 0.42
+height = 1.82
+
+[sub_resource type="TorusMesh" id="TorusMesh_select"]
+inner_radius = 0.65
+outer_radius = 0.75
+rings = 24
+ring_segments = 16
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_select"]
+transparency = 1
+albedo_color = Color(0.2, 0.7, 1, 0.8)
+emission_enabled = true
+emission = Color(0.2, 0.7, 1, 1)
+emission_energy_multiplier = 2.0
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_shaft"]
+top_radius = 0.035
+bottom_radius = 0.03
+height = 1.75
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wood"]
+albedo_color = Color(0.28, 0.16, 0.09, 1)
+roughness = 0.75
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_crown"]
+top_radius = 0.075
+bottom_radius = 0.045
+height = 0.18
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gold"]
+albedo_color = Color(0.88, 0.75, 0.28, 1)
+metallic = 0.85
+roughness = 0.35
+
+[sub_resource type="SphereMesh" id="SphereMesh_gem"]
+radius = 0.11
+height = 0.22
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gem"]
+albedo_color = Color(0.2, 0.85, 1, 1)
+emission_enabled = true
+emission = Color(0.2, 0.85, 1, 1)
+emission_energy_multiplier = 4.5
+
+[sub_resource type="Curve" id="Curve_spark"]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), -1.2, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_spark"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(0.35, 0.9, 1, 0.85)
+
+[sub_resource type="SphereMesh" id="SphereMesh_spark"]
+material = SubResource("StandardMaterial3D_spark")
+radius = 0.03
+height = 0.06
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_brim"]
+top_radius = 0.44
+bottom_radius = 0.44
+height = 0.035
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_velvet"]
+albedo_color = Color(0.12, 0.22, 0.65, 1)
+roughness = 0.6
+rim_enabled = true
+rim = 0.65
+rim_tint = 0.4
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_cone"]
+top_radius = 0.02
+bottom_radius = 0.26
+height = 0.58
+
+[node name="Wizard" type="CharacterBody3D" groups=["player"]]
+script = ExtResource("1_wiz")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.91, 0)
+shape = SubResource("CapsuleShape3D_wiz")
+
+[node name="SelectionRing" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 0)
+mesh = SubResource("TorusMesh_select")
+material_override = SubResource("StandardMaterial3D_select")
+
+[node name="Model" parent="." instance=ExtResource("2_mage_model")]
+
+[node name="StaffAttachment" type="BoneAttachment3D" parent="Model/Rig/Skeleton3D" index="1"]
+bone_name = "DEF-hand.R"
+bone_idx = 29
+
+[node name="Staff" type="Node3D" parent="Model/Rig/Skeleton3D/StaffAttachment"]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0.05, -0.05, 0.15)
+
+[node name="Shaft" type="MeshInstance3D" parent="Model/Rig/Skeleton3D/StaffAttachment/Staff"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 0)
+mesh = SubResource("CylinderMesh_shaft")
+material_override = SubResource("StandardMaterial3D_wood")
+
+[node name="Crown" type="MeshInstance3D" parent="Model/Rig/Skeleton3D/StaffAttachment/Staff"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.05, 0)
+mesh = SubResource("CylinderMesh_crown")
+material_override = SubResource("StandardMaterial3D_gold")
+
+[node name="Gem" type="MeshInstance3D" parent="Model/Rig/Skeleton3D/StaffAttachment/Staff"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.18, 0)
+mesh = SubResource("SphereMesh_gem")
+material_override = SubResource("StandardMaterial3D_gem")
+
+[node name="StaffLight" type="OmniLight3D" parent="Model/Rig/Skeleton3D/StaffAttachment/Staff/Gem"]
+light_color = Color(0.2, 0.85, 1, 1)
+light_energy = 2.0
+omni_range = 3.5
+
+[node name="AuraParticles" type="CPUParticles3D" parent="Model/Rig/Skeleton3D/StaffAttachment/Staff/Gem"]
+amount = 12
+lifetime = 0.65
+emission_shape = 1
+emission_sphere_radius = 0.15
+gravity = Vector3(0, 0.8, 0)
+scale_amount_curve = SubResource("Curve_spark")
+mesh = SubResource("SphereMesh_spark")
+
+[node name="HatAttachment" type="BoneAttachment3D" parent="Model/Rig/Skeleton3D" index="2"]
+bone_name = "DEF-head"
+bone_idx = 6
+
+[node name="Hat" type="Node3D" parent="Model/Rig/Skeleton3D/HatAttachment"]
+transform = Transform3D(1, 0, 0, 0, 0.984808, -0.173648, 0, 0.173648, 0.984808, 0, 0.1, -0.04)
+
+[node name="Brim" type="MeshInstance3D" parent="Model/Rig/Skeleton3D/HatAttachment/Hat"]
+mesh = SubResource("CylinderMesh_brim")
+material_override = SubResource("StandardMaterial3D_velvet")
+
+[node name="Cone" type="MeshInstance3D" parent="Model/Rig/Skeleton3D/HatAttachment/Hat"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.29, 0)
+mesh = SubResource("CylinderMesh_cone")
+material_override = SubResource("StandardMaterial3D_velvet")
+
+[node name="GoldBand" type="MeshInstance3D" parent="Model/Rig/Skeleton3D/HatAttachment/Hat"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0)
+mesh = SubResource("CylinderMesh_crown")
+material_override = SubResource("StandardMaterial3D_gold")
+
+[node name="AimMarker" type="Node3D" parent="."]
+top_level = true
+
+[node name="AimRing" type="MeshInstance3D" parent="AimMarker"]
+transform = Transform3D(0.6, 0, 0, 0, 0.6, 0, 0, 0, 0.6, 0, 0.05, 0)
+mesh = SubResource("TorusMesh_select")
+material_override = SubResource("StandardMaterial3D_select")

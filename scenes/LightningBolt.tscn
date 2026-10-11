@@ -1,0 +1,44 @@
+[gd_scene load_steps=6 format=3 uid="uid://lightning_bolt_01"]
+
+[ext_resource type="Script" path="res://scripts/lightning_bolt.gd" id="1_light"]
+[ext_resource type="Texture2D" path="res://assets/vfx/textures/spark_star.png" id="2_spark"]
+
+[sub_resource type="Curve" id="Curve_spark"]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), -1.8, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_spark"]
+transparency = 1
+blend_mode = 1
+shading_mode = 0
+albedo_color = Color(0.75, 0.9, 1, 1)
+albedo_texture = ExtResource("2_spark")
+billboard_mode = 3
+billboard_keep_scale = true
+
+[sub_resource type="QuadMesh" id="QuadMesh_spark"]
+material = SubResource("StandardMaterial3D_spark")
+size = Vector2(0.26, 0.26)
+
+[node name="LightningBolt" type="Node3D"]
+script = ExtResource("1_light")
+
+[node name="BoltMesh" type="MeshInstance3D" parent="."]
+
+[node name="SparkParticles" type="CPUParticles3D" parent="."]
+emitting = false
+amount = 28
+lifetime = 0.3
+one_shot = true
+explosiveness = 0.95
+spread = 180.0
+initial_velocity_min = 5.0
+initial_velocity_max = 10.0
+gravity = Vector3(0, -5.0, 0)
+scale_amount_curve = SubResource("Curve_spark")
+mesh = SubResource("QuadMesh_spark")
+
+[node name="OmniLight3D" type="OmniLight3D" parent="."]
+light_color = Color(0.65, 0.85, 1, 1)
+light_energy = 8.0
+omni_range = 7.0

@@ -1,0 +1,14 @@
+[gd_scene load_steps=3 format=3 uid="uid://fantasy_button_comp_01"]
+
+[ext_resource type="Theme" uid="uid://fantasy_theme_duelo_01" path="res://assets/ui/FantasyTheme.tres" id="1_theme"]
+[ext_resource type="Script" path="res://scripts/ui/fantasy_button.gd" id="2_script"]
+
+[node name="FantasyButton" type="Button"]
+custom_minimum_size = Vector2(160, 48)
+offset_right = 160.0
+offset_bottom = 48.0
+pivot_offset = Vector2(80, 24)
+theme = ExtResource("1_theme")
+theme_override_font_sizes/font_size = 14
+text = "ACEPTAR"
+script = ExtResource("2_script")

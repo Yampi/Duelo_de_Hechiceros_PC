@@ -1,0 +1,95 @@
+[gd_scene load_steps=12 format=3 uid="uid://bone_arrow_01"]
+
+[ext_resource type="Script" path="res://scripts/bone_arrow.gd" id="1_arrow"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_bone"]
+albedo_color = Color(0.92, 0.9, 0.82, 1)
+roughness = 0.75
+emission_enabled = true
+emission = Color(0.5, 0.9, 0.3, 1)
+emission_energy_multiplier = 1.8
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_shaft"]
+material = SubResource("StandardMaterial3D_bone")
+top_radius = 0.025
+bottom_radius = 0.025
+height = 0.85
+
+[sub_resource type="PrismMesh" id="PrismMesh_tip"]
+material = SubResource("StandardMaterial3D_bone")
+left_to_right = 0.5
+size = Vector3(0.09, 0.22, 0.04)
+
+[sub_resource type="Curve" id="Curve_trail"]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), -1.2, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_necro"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(0.45, 0.95, 0.3, 0.75)
+
+[sub_resource type="SphereMesh" id="SphereMesh_necro"]
+material = SubResource("StandardMaterial3D_necro")
+radius = 0.04
+height = 0.08
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_shard"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(0.8, 0.95, 0.6, 1)
+
+[sub_resource type="SphereMesh" id="SphereMesh_shard"]
+material = SubResource("StandardMaterial3D_shard")
+radius = 0.05
+height = 0.1
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_hit"]
+radius = 0.32
+
+[node name="BoneArrow" type="Node3D"]
+script = ExtResource("1_arrow")
+
+[node name="Visuals" type="Node3D" parent="."]
+
+[node name="Shaft" type="MeshInstance3D" parent="Visuals"]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0)
+mesh = SubResource("CylinderMesh_shaft")
+
+[node name="Tip" type="MeshInstance3D" parent="Visuals"]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, -0.45)
+mesh = SubResource("PrismMesh_tip")
+
+[node name="NecroticTrail" type="CPUParticles3D" parent="."]
+amount = 16
+lifetime = 0.3
+emission_shape = 1
+emission_sphere_radius = 0.05
+gravity = Vector3(0, 0.5, 0)
+scale_amount_curve = SubResource("Curve_trail")
+mesh = SubResource("SphereMesh_necro")
+
+[node name="ImpactBurst" type="CPUParticles3D" parent="."]
+emitting = false
+amount = 14
+lifetime = 0.35
+one_shot = true
+explosiveness = 0.92
+spread = 180.0
+initial_velocity_min = 3.5
+initial_velocity_max = 6.5
+gravity = Vector3(0, -4.0, 0)
+scale_amount_curve = SubResource("Curve_trail")
+mesh = SubResource("SphereMesh_shard")
+
+[node name="OmniLight3D" type="OmniLight3D" parent="."]
+light_color = Color(0.5, 0.95, 0.3, 1)
+light_energy = 1.8
+omni_range = 2.5
+
+[node name="Area3D" type="Area3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D"]
+shape = SubResource("SphereShape3D_hit")
+
+[connection signal="body_entered" from="Area3D" to="." method="_on_area_3d_body_entered"]

@@ -1,0 +1,225 @@
+[gd_scene load_steps=6 format=3 uid="uid://settings_modal_scene_01"]
+
+[ext_resource type="Script" path="res://scripts/ui/settings_modal.gd" id="1_script"]
+[ext_resource type="Theme" uid="uid://fantasy_theme_duelo_01" path="res://assets/ui/FantasyTheme.tres" id="2_theme"]
+[ext_resource type="FontFile" path="res://assets/ui/fonts/Cinzel.ttf" id="3_cinzel"]
+[ext_resource type="Texture2D" path="res://assets/ui/frames/divider-000.png" id="4_divider"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_modal"]
+bg_color = Color(0.05, 0.07, 0.1, 0.96)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.85, 0.72, 0.35, 0.85)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+content_margin_left = 24.0
+content_margin_top = 20.0
+content_margin_right = 24.0
+content_margin_bottom = 20.0
+
+[node name="SettingsModal" type="Control"]
+process_mode = 3
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.02, 0.03, 0.05, 0.75)
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="Center"]
+custom_minimum_size = Vector2(560, 480)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_modal")
+
+[node name="VBox" type="VBoxContainer" parent="Center/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="Center/Panel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.88, 0.4, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_fonts/font = ExtResource("3_cinzel")
+theme_override_font_sizes/font_size = 22
+text = "⚙ AJUSTES ARCANOS"
+horizontal_alignment = 1
+
+[node name="Divider" type="TextureRect" parent="Center/Panel/VBox"]
+modulate = Color(1, 0.85, 0.35, 0.75)
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2
+texture = ExtResource("4_divider")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="AudioHeader" type="Label" parent="Center/Panel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.85, 1, 1)
+theme_override_font_sizes/font_size = 13
+text = "VOLÚMENES DE AUDIO"
+
+[node name="GridAudio" type="GridContainer" parent="Center/Panel/VBox"]
+layout_mode = 2
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 6
+columns = 3
+
+[node name="LblMaster" type="Label" parent="Center/Panel/VBox/GridAudio"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+text = "Maestro:"
+
+[node name="SliderMaster" type="HSlider" parent="Center/Panel/VBox/GridAudio"]
+custom_minimum_size = Vector2(300, 20)
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 1.0
+step = 0.05
+value = 0.85
+
+[node name="LblMasterVal" type="Label" parent="Center/Panel/VBox/GridAudio"]
+custom_minimum_size = Vector2(50, 0)
+layout_mode = 2
+text = "85%"
+
+[node name="LblMusic" type="Label" parent="Center/Panel/VBox/GridAudio"]
+layout_mode = 2
+text = "Música:"
+
+[node name="SliderMusic" type="HSlider" parent="Center/Panel/VBox/GridAudio"]
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 1.0
+step = 0.05
+value = 0.7
+
+[node name="LblMusicVal" type="Label" parent="Center/Panel/VBox/GridAudio"]
+layout_mode = 2
+text = "70%"
+
+[node name="LblSFX" type="Label" parent="Center/Panel/VBox/GridAudio"]
+layout_mode = 2
+text = "Efectos (SFX):"
+
+[node name="SliderSFX" type="HSlider" parent="Center/Panel/VBox/GridAudio"]
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 1.0
+step = 0.05
+value = 0.85
+
+[node name="LblSFXVal" type="Label" parent="Center/Panel/VBox/GridAudio"]
+layout_mode = 2
+text = "85%"
+
+[node name="LblUI" type="Label" parent="Center/Panel/VBox/GridAudio"]
+layout_mode = 2
+text = "Interfaz (UI):"
+
+[node name="SliderUI" type="HSlider" parent="Center/Panel/VBox/GridAudio"]
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 1.0
+step = 0.05
+value = 0.9
+
+[node name="LblUIVal" type="Label" parent="Center/Panel/VBox/GridAudio"]
+layout_mode = 2
+text = "90%"
+
+[node name="VideoHeader" type="Label" parent="Center/Panel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.85, 1, 1)
+theme_override_font_sizes/font_size = 13
+text = "PANTALLA Y ACCESIBILIDAD"
+
+[node name="GridVideo" type="GridContainer" parent="Center/Panel/VBox"]
+layout_mode = 2
+theme_override_constants/h_separation = 16
+theme_override_constants/v_separation = 8
+columns = 2
+
+[node name="CheckFullscreen" type="CheckBox" parent="Center/Panel/VBox/GridVideo"]
+layout_mode = 2
+text = "Pantalla Completa"
+
+[node name="CheckShake" type="CheckBox" parent="Center/Panel/VBox/GridVideo"]
+layout_mode = 2
+text = "Reducir Sacudidas (Camera Shake)"
+
+[node name="CheckFlashes" type="CheckBox" parent="Center/Panel/VBox/GridVideo"]
+layout_mode = 2
+text = "Reducir Destellos de Pantalla"
+
+[node name="CheckHints" type="CheckBox" parent="Center/Panel/VBox/GridVideo"]
+layout_mode = 2
+button_pressed = true
+text = "Mostrar Ayudas de Control [H]"
+
+[node name="ScaleRow" type="HBoxContainer" parent="Center/Panel/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="LblScale" type="Label" parent="Center/Panel/VBox/ScaleRow"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+text = "Escala UI:"
+
+[node name="SliderScale" type="HSlider" parent="Center/Panel/VBox/ScaleRow"]
+custom_minimum_size = Vector2(300, 20)
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = 0.8
+max_value = 1.3
+step = 0.05
+value = 1.0
+
+[node name="LblScaleVal" type="Label" parent="Center/Panel/VBox/ScaleRow"]
+custom_minimum_size = Vector2(50, 0)
+layout_mode = 2
+text = "100%"
+
+[node name="Spacer" type="Control" parent="Center/Panel/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ButtonsRow" type="HBoxContainer" parent="Center/Panel/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="BtnSave" type="Button" parent="Center/Panel/VBox/ButtonsRow"]
+custom_minimum_size = Vector2(190, 40)
+layout_mode = 2
+theme = ExtResource("2_theme")
+text = "✓ GUARDAR Y CERRAR"
+
+[node name="BtnClose" type="Button" parent="Center/Panel/VBox/ButtonsRow"]
+custom_minimum_size = Vector2(140, 40)
+layout_mode = 2
+theme = ExtResource("2_theme")
+text = "✕ CANCELAR"

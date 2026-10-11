@@ -1,0 +1,674 @@
+[gd_scene load_steps=24 format=3 uid="uid://hud_magic_and_mayhem_01"]
+
+[ext_resource type="Script" path="res://scripts/hud.gd" id="1_hud"]
+[ext_resource type="Texture2D" path="res://assets/ui/frames/panel-border-001.png" id="2_border"]
+[ext_resource type="Texture2D" path="res://assets/ui/frames/divider-000.png" id="4_divider"]
+[ext_resource type="PackedScene" path="res://scenes/ui/TargetIndicator.tscn" id="5_target"]
+[ext_resource type="PackedScene" path="res://scenes/ui/StatBar.tscn" id="6_stat_bar"]
+[ext_resource type="PackedScene" path="res://scenes/ui/SpellSlot.tscn" id="7_slot"]
+[ext_resource type="PackedScene" uid="uid://quick_slot_comp_01" path="res://scenes/ui/QuickSlot.tscn" id="8_qslot"]
+[ext_resource type="Theme" uid="uid://fantasy_theme_duelo_01" path="res://assets/ui/FantasyTheme.tres" id="16_theme"]
+[ext_resource type="PackedScene" uid="uid://minimap_scene_01" path="res://scenes/ui/Minimap.tscn" id="17_minimap"]
+[ext_resource type="PackedScene" uid="uid://inventory_ui_scene_01" path="res://scenes/ui/InventoryUI.tscn" id="18_inv"]
+[ext_resource type="PackedScene" uid="uid://world_map_modal_scene_01" path="res://scenes/ui/WorldMapModal.tscn" id="19_map_modal"]
+[ext_resource type="Script" path="res://scripts/ui/status_icon_bar.gd" id="20_status_bar"]
+[ext_resource type="Texture2D" path="res://assets/ui/icons/items/item_magic_scroll.png" id="21_scroll"]
+[ext_resource type="Texture2D" path="res://assets/ui/icons/spells/spell_book.png" id="22_book"]
+[ext_resource type="FontFile" path="res://assets/ui/fonts/Cinzel.ttf" id="23_cinzel"]
+[ext_resource type="Shader" path="res://scripts/ui/vignette.gdshader" id="24_shader_vig"]
+[ext_resource type="Shader" path="res://scripts/ui/screen_effects.gdshader" id="25_shader_fx"]
+[ext_resource type="PackedScene" uid="uid://pause_menu_scene_01" path="res://scenes/ui/PauseMenu.tscn" id="26_pause"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_vig"]
+shader = ExtResource("24_shader_vig")
+shader_parameter/vignette_color = Color(0.85, 0.08, 0.08, 1)
+shader_parameter/vignette_intensity = 0.0
+shader_parameter/vignette_radius = 0.72
+shader_parameter/vignette_softness = 0.45
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_fx"]
+shader = ExtResource("25_shader_fx")
+shader_parameter/desaturation = 0.0
+shader_parameter/flash_tint = Color(0, 0, 0, 0)
+shader_parameter/flash_power = 0.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hint"]
+bg_color = Color(0.04, 0.06, 0.09, 0.88)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+content_margin_left = 12.0
+content_margin_top = 8.0
+content_margin_right = 12.0
+content_margin_bottom = 8.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tracker"]
+bg_color = Color(0.05, 0.07, 0.1, 0.85)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.85, 0.72, 0.35, 0.7)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+content_margin_left = 10.0
+content_margin_top = 6.0
+content_margin_right = 10.0
+content_margin_bottom = 6.0
+
+[node name="HUD" type="CanvasLayer"]
+script = ExtResource("1_hud")
+
+[node name="ScreenVignette" type="ColorRect" parent="."]
+material = SubResource("ShaderMaterial_vig")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="DamageFlash" type="ColorRect" parent="."]
+modulate = Color(1, 1, 1, 0)
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.9, 0.1, 0.1, 0.28)
+
+[node name="ScreenEffects" type="ColorRect" parent="."]
+material = SubResource("ShaderMaterial_fx")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="ControlHints" type="PanelContainer" parent="."]
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 260.0
+offset_bottom = 180.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_hint")
+
+[node name="VBox" type="VBoxContainer" parent="ControlHints"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="HeaderRow" type="HBoxContainer" parent="ControlHints/VBox"]
+layout_mode = 2
+
+[node name="Header" type="Label" parent="ControlHints/VBox/HeaderRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 0.88, 0.45, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_fonts/font = ExtResource("23_cinzel")
+theme_override_font_sizes/font_size = 12
+text = "📜 CONTROLES ARCANOS"
+
+[node name="BtnCloseHint" type="Button" parent="ControlHints/VBox/HeaderRow"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "✕ [H]"
+flat = true
+
+[node name="Divider" type="TextureRect" parent="ControlHints/VBox"]
+modulate = Color(0.8, 0.7, 0.45, 0.6)
+custom_minimum_size = Vector2(0, 6)
+layout_mode = 2
+texture = ExtResource("4_divider")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Controls" type="Label" parent="ControlHints/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.88, 0.92, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 11
+text = "• WASD: Mover (Shift: Correr)
+• Ratón: Apuntar | Clic Izq: Canalizar
+• Clic Der: Orbitar Cámara | Rueda: Zoom
+• [1-9]: Hechizos y habilidades
+• [Q]: Poción Salud | [E]: Poción Maná
+• [I]: Inventario | [M]: Mapa | [H]: Ocultar"
+
+[node name="HintBadge" type="Button" parent="."]
+visible = false
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 110.0
+offset_bottom = 38.0
+theme_override_font_sizes/font_size = 10
+text = "📜 [H] Controles"
+
+[node name="ObjectiveTracker" type="PanelContainer" parent="."]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -266.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = 76.0
+grow_horizontal = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_tracker")
+
+[node name="VBox" type="VBoxContainer" parent="ObjectiveTracker"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="ModeTitle" type="Label" parent="ObjectiveTracker/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.35, 0.9, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_fonts/font = ExtResource("23_cinzel")
+theme_override_font_sizes/font_size = 12
+text = "⚔ MODO SUPERVIVENCIA"
+horizontal_alignment = 1
+
+[node name="ModeDetail" type="Label" parent="ObjectiveTracker/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.95, 0.95, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 11
+text = "Oleada 1 | Tiempo: 00:00"
+horizontal_alignment = 1
+
+[node name="ModeSub" type="Label" parent="ObjectiveTracker/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.75, 0.8, 0.85, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 10
+text = "Enemigos derrotados: 0"
+horizontal_alignment = 1
+
+[node name="Minimap" parent="." instance=ExtResource("17_minimap")]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -176.0
+offset_top = 84.0
+offset_right = -16.0
+offset_bottom = 244.0
+grow_horizontal = 0
+
+[node name="TargetIndicator" parent="." instance=ExtResource("5_target")]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -180.0
+offset_top = 16.0
+offset_right = 180.0
+offset_bottom = 72.0
+
+[node name="BottomHUD" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -106.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+
+[node name="LeftCluster" type="VBoxContainer" parent="BottomHUD"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -580.0
+offset_top = -80.0
+offset_right = -320.0
+offset_bottom = 0.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/separation = 4
+
+[node name="HealthBar" parent="BottomHUD/LeftCluster" instance=ExtResource("6_stat_bar")]
+custom_minimum_size = Vector2(250, 44)
+layout_mode = 2
+
+[node name="StatusBar" type="HBoxContainer" parent="BottomHUD/LeftCluster"]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+script = ExtResource("20_status_bar")
+
+[node name="CenterCluster" type="VBoxContainer" parent="BottomHUD"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -285.0
+offset_top = -94.0
+offset_right = 285.0
+offset_bottom = 0.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/separation = 4
+alignment = 2
+
+[node name="QuickSlotsRow" type="HBoxContainer" parent="BottomHUD/CenterCluster"]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="QuickSlotHealth" parent="BottomHUD/CenterCluster/QuickSlotsRow" instance=ExtResource("8_qslot")]
+layout_mode = 2
+
+[node name="QuickSlotMana" parent="BottomHUD/CenterCluster/QuickSlotsRow" instance=ExtResource("8_qslot")]
+layout_mode = 2
+action_key = "E"
+item_id = "potion_mana"
+
+[node name="ShrinesCompact" type="HBoxContainer" parent="BottomHUD/CenterCluster/QuickSlotsRow"]
+layout_mode = 2
+theme_override_constants/separation = 4
+alignment = 1
+
+[node name="Label" type="Label" parent="BottomHUD/CenterCluster/QuickSlotsRow/ShrinesCompact"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.75, 0.5, 0.9)
+theme_override_font_sizes/font_size = 11
+text = "Santuarios:"
+
+[node name="LblShrinesCount" type="Label" parent="BottomHUD/CenterCluster/QuickSlotsRow/ShrinesCompact"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.3, 0.9, 1, 1)
+theme_override_font_sizes/font_size = 11
+text = "0/3"
+
+[node name="SpellBar" type="HBoxContainer" parent="BottomHUD/CenterCluster"]
+layout_mode = 2
+theme_override_constants/separation = 6
+alignment = 1
+
+[node name="Slot1" parent="BottomHUD/CenterCluster/SpellBar" instance=ExtResource("7_slot")]
+layout_mode = 2
+is_selected = true
+
+[node name="Slot2" parent="BottomHUD/CenterCluster/SpellBar" instance=ExtResource("7_slot")]
+layout_mode = 2
+slot_index = 2
+hotkey_text = "[2]"
+
+[node name="Slot3" parent="BottomHUD/CenterCluster/SpellBar" instance=ExtResource("7_slot")]
+layout_mode = 2
+slot_index = 3
+hotkey_text = "[3]"
+
+[node name="Slot4" parent="BottomHUD/CenterCluster/SpellBar" instance=ExtResource("7_slot")]
+layout_mode = 2
+slot_index = 4
+hotkey_text = "[4]"
+
+[node name="Slot5" parent="BottomHUD/CenterCluster/SpellBar" instance=ExtResource("7_slot")]
+layout_mode = 2
+slot_index = 5
+hotkey_text = "[5]"
+
+[node name="Slot6" parent="BottomHUD/CenterCluster/SpellBar" instance=ExtResource("7_slot")]
+layout_mode = 2
+slot_index = 6
+hotkey_text = "[6/Esp]"
+
+[node name="Slot7" parent="BottomHUD/CenterCluster/SpellBar" instance=ExtResource("7_slot")]
+layout_mode = 2
+slot_index = 7
+hotkey_text = "[T]"
+
+[node name="Slot8" parent="BottomHUD/CenterCluster/SpellBar" instance=ExtResource("7_slot")]
+layout_mode = 2
+slot_index = 8
+hotkey_text = "[R]"
+
+[node name="Slot9" parent="BottomHUD/CenterCluster/SpellBar" instance=ExtResource("7_slot")]
+layout_mode = 2
+slot_index = 9
+hotkey_text = "[C]"
+
+[node name="RightCluster" type="VBoxContainer" parent="BottomHUD"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = 320.0
+offset_top = -80.0
+offset_right = 580.0
+offset_bottom = 0.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/separation = 4
+
+[node name="ManaBar" parent="BottomHUD/RightCluster" instance=ExtResource("6_stat_bar")]
+custom_minimum_size = Vector2(250, 44)
+layout_mode = 2
+bar_type = 1
+
+[node name="NavRow" type="HBoxContainer" parent="BottomHUD/RightCluster"]
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 2
+
+[node name="BtnInvToggle" type="Button" parent="BottomHUD/RightCluster/NavRow"]
+custom_minimum_size = Vector2(96, 24)
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "[I] Inventario"
+icon = ExtResource("22_book")
+expand_icon = true
+
+[node name="BtnMapToggle" type="Button" parent="BottomHUD/RightCluster/NavRow"]
+custom_minimum_size = Vector2(82, 24)
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "[M] Mapa"
+icon = ExtResource("21_scroll")
+expand_icon = true
+
+[node name="GameOverPanel" type="Control" parent="."]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Overlay" type="ColorRect" parent="GameOverPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.78)
+
+[node name="Panel" type="Control" parent="GameOverPanel"]
+custom_minimum_size = Vector2(420, 280)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -210.0
+offset_top = -140.0
+offset_right = 210.0
+offset_bottom = 140.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Bg" type="ColorRect" parent="GameOverPanel/Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 6.0
+offset_top = 6.0
+offset_right = -6.0
+offset_bottom = -6.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.08, 0.04, 0.04, 0.96)
+
+[node name="FrameBorder" type="NinePatchRect" parent="GameOverPanel/Panel"]
+modulate = Color(0.9, 0.25, 0.25, 1)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_border")
+patch_margin_left = 32
+patch_margin_top = 32
+patch_margin_right = 32
+patch_margin_bottom = 32
+
+[node name="VBox" type="VBoxContainer" parent="GameOverPanel/Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = 20.0
+offset_right = -24.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="Title" type="Label" parent="GameOverPanel/Panel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.25, 0.25, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_fonts/font = ExtResource("23_cinzel")
+theme_override_font_sizes/font_size = 22
+text = "☠ DERROTA ARCANA ☠"
+horizontal_alignment = 1
+
+[node name="Divider" type="TextureRect" parent="GameOverPanel/Panel/VBox"]
+modulate = Color(0.8, 0.2, 0.2, 0.8)
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+texture = ExtResource("4_divider")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="StatsLabel" type="Label" parent="GameOverPanel/Panel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.9, 0.9, 1)
+theme_override_font_sizes/font_size = 13
+text = "Enemigos derrotados: 0
+Puntuación final: 0"
+horizontal_alignment = 1
+
+[node name="BtnRetry" type="Button" parent="GameOverPanel/Panel/VBox"]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+theme = ExtResource("16_theme")
+text = "🔄 REINTENTAR DUELO"
+
+[node name="BtnMenu" type="Button" parent="GameOverPanel/Panel/VBox"]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+theme = ExtResource("16_theme")
+text = "🏛 MENÚ PRINCIPAL"
+
+[node name="VictoryPanel" type="Control" parent="."]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Overlay" type="ColorRect" parent="VictoryPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.78)
+
+[node name="Panel" type="Control" parent="VictoryPanel"]
+custom_minimum_size = Vector2(420, 280)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -210.0
+offset_top = -140.0
+offset_right = 210.0
+offset_bottom = 140.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Bg" type="ColorRect" parent="VictoryPanel/Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 6.0
+offset_top = 6.0
+offset_right = -6.0
+offset_bottom = -6.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.04, 0.08, 0.05, 0.96)
+
+[node name="FrameBorder" type="NinePatchRect" parent="VictoryPanel/Panel"]
+modulate = Color(0.85, 0.75, 0.3, 1)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_border")
+patch_margin_left = 32
+patch_margin_top = 32
+patch_margin_right = 32
+patch_margin_bottom = 32
+
+[node name="VBox" type="VBoxContainer" parent="VictoryPanel/Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = 20.0
+offset_right = -24.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="Title" type="Label" parent="VictoryPanel/Panel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.9, 0.35, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_fonts/font = ExtResource("23_cinzel")
+theme_override_font_sizes/font_size = 22
+text = "✨ ¡VICTORIA ARCANA! ✨"
+horizontal_alignment = 1
+
+[node name="Divider" type="TextureRect" parent="VictoryPanel/Panel/VBox"]
+modulate = Color(1, 0.85, 0.3, 0.8)
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+texture = ExtResource("4_divider")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="StatsLabel" type="Label" parent="VictoryPanel/Panel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.95, 0.9, 1)
+theme_override_font_sizes/font_size = 13
+text = "¡Has completado el nivel con éxito!
+Puntuación: 0"
+horizontal_alignment = 1
+
+[node name="BtnNext" type="Button" parent="VictoryPanel/Panel/VBox"]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+theme = ExtResource("16_theme")
+text = "⚔ SIGUIENTE DUELO"
+
+[node name="BtnMenu" type="Button" parent="VictoryPanel/Panel/VBox"]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+theme = ExtResource("16_theme")
+text = "🏛 MENÚ PRINCIPAL"
+
+[node name="InventoryUI" parent="." instance=ExtResource("18_inv")]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="WorldMapModal" parent="." instance=ExtResource("19_map_modal")]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="LootToastContainer" type="VBoxContainer" parent="."]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -230.0
+offset_top = -240.0
+offset_right = -16.0
+offset_bottom = -90.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
+theme_override_constants/separation = 6
+alignment = 2
+
+[node name="InteractionPrompts" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="PauseMenu" parent="." instance=ExtResource("26_pause")]
+visible = false
+layout_mode = 3
+
+[node name="ScreenFade" type="ColorRect" parent="."]
+modulate = Color(0, 0, 0, 0)
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.02, 0.03, 0.05, 1)

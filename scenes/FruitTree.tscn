@@ -1,0 +1,67 @@
+[gd_scene load_steps=7 format=3 uid="uid://fruit_tree_01"]
+
+[ext_resource type="Script" path="res://scripts/fruit_tree.gd" id="1_ftree"]
+[ext_resource type="PackedScene" path="res://assets/environment/CommonTree_1.gltf" id="2_oak"]
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_trunk"]
+height = 4.0
+radius = 0.6
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_zone"]
+height = 3.0
+radius = 3.8
+
+[sub_resource type="SphereMesh" id="SphereMesh_apple_branch"]
+radius = 0.35
+height = 0.6
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_apple_mat"]
+albedo_color = Color(1, 0.1, 0.1, 1)
+roughness = 0.3
+emission_enabled = true
+emission = Color(0.9, 0.1, 0.1, 1)
+emission_energy_multiplier = 2.0
+
+[node name="FruitTree" type="StaticBody3D" groups=["obstacle"]]
+script = ExtResource("1_ftree")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.0, 0)
+shape = SubResource("CylinderShape3D_trunk")
+
+[node name="Model" parent="." instance=ExtResource("2_oak")]
+transform = Transform3D(1.15, 0, 0, 0, 1.15, 0, 0, 0, 1.15, 0, 0, 0)
+
+[node name="InteractZone" type="Area3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="InteractZone"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+shape = SubResource("CylinderShape3D_zone")
+
+[node name="Fruits" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.2, 0)
+
+[node name="Apple1" type="MeshInstance3D" parent="Fruits"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.2, 0.4, 0.8)
+mesh = SubResource("SphereMesh_apple_branch")
+material_override = SubResource("StandardMaterial3D_apple_mat")
+
+[node name="Apple2" type="MeshInstance3D" parent="Fruits"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.3, 0.2, -0.6)
+mesh = SubResource("SphereMesh_apple_branch")
+material_override = SubResource("StandardMaterial3D_apple_mat")
+
+[node name="Apple3" type="MeshInstance3D" parent="Fruits"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, 0.6, -1.2)
+mesh = SubResource("SphereMesh_apple_branch")
+material_override = SubResource("StandardMaterial3D_apple_mat")
+
+[node name="PromptLabel" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.8, 0)
+billboard = 1
+no_depth_test = true
+text = "🍎 ÁRBOL FRUTAL SILVESTRE
+Acércate para cosechar"
+font_size = 28
+outline_size = 6
+modulate = Color(1, 0.85, 0.3, 1)

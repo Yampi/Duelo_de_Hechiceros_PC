@@ -1,0 +1,45 @@
+[gd_scene load_steps=5 format=3 uid="uid://world_item_scene_01"]
+
+[ext_resource type="Script" path="res://scripts/world_item.gd" id="1_item"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_pickup"]
+radius = 1.4
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_glow"]
+albedo_color = Color(0.2, 0.85, 1, 1)
+emission_enabled = true
+emission = Color(0.2, 0.85, 1, 1)
+emission_energy_multiplier = 2.0
+roughness = 0.2
+
+[sub_resource type="PrismMesh" id="PrismMesh_crystal"]
+material = SubResource("StandardMaterial3D_glow")
+left_to_right = 0.5
+size = Vector3(0.4, 0.7, 0.4)
+
+[node name="WorldItem" type="Area3D" groups=["world_item"]]
+collision_layer = 4
+collision_mask = 1
+script = ExtResource("1_item")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("SphereShape3D_pickup")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 0)
+mesh = SubResource("PrismMesh_crystal")
+
+[node name="OmniLight3D" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 0)
+light_color = Color(0.2, 0.85, 1, 1)
+light_energy = 2.0
+omni_range = 3.5
+
+[node name="PromptLabel" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0)
+billboard = 1
+no_depth_test = true
+modulate = Color(1, 0.95, 0.4, 1)
+text = "[E] Recoger"
+font_size = 22
+outline_size = 6

@@ -1,0 +1,18 @@
+[gd_scene load_steps=4 format=3 uid="uid://goblin_minion_01"]
+
+[ext_resource type="Script" path="res://scripts/goblin_minion.gd" id="1_gob"]
+[ext_resource type="PackedScene" path="res://assets/characters/GoblinAnimated.glb" id="2_mesh"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_gob"]
+radius = 0.4
+height = 1.2
+
+[node name="GoblinMinion" type="CharacterBody3D" groups=["minion"]]
+script = ExtResource("1_gob")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
+shape = SubResource("CapsuleShape3D_gob")
+
+[node name="Model" parent="." instance=ExtResource("2_mesh")]
+transform = Transform3D(-0.8, 0, 0, 0, 0.8, 0, 0, 0, -0.8, 0, 0, 0)

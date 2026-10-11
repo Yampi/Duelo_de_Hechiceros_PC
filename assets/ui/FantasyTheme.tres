@@ -1,0 +1,94 @@
+[gd_resource type="Theme" load_steps=10 format=3 uid="uid://fantasy_theme_duelo_01"]
+
+[ext_resource type="FontFile" path="res://assets/ui/fonts/Inter.ttf" id="1_font_inter"]
+[ext_resource type="Texture2D" path="res://assets/ui/buttons/btn_rect_normal.png" id="2_normal"]
+[ext_resource type="Texture2D" path="res://assets/ui/buttons/btn_rect_hover.png" id="3_hover"]
+[ext_resource type="Texture2D" path="res://assets/ui/buttons/btn_rect_pressed.png" id="4_pressed"]
+[ext_resource type="Texture2D" path="res://assets/ui/buttons/btn_rect_disabled.png" id="5_disabled"]
+[ext_resource type="Texture2D" path="res://assets/ui/frames/panel-border-000.png" id="6_focus"]
+[ext_resource type="Texture2D" path="res://assets/ui/frames/panel-001.png" id="7_panel"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_btn_normal"]
+texture = ExtResource("2_normal")
+texture_margin_left = 18.0
+texture_margin_top = 18.0
+texture_margin_right = 18.0
+texture_margin_bottom = 18.0
+modulate_color = Color(0.16, 0.2, 0.28, 0.96)
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_btn_hover"]
+texture = ExtResource("3_hover")
+texture_margin_left = 18.0
+texture_margin_top = 18.0
+texture_margin_right = 18.0
+texture_margin_bottom = 18.0
+modulate_color = Color(0.24, 0.36, 0.52, 1)
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_btn_pressed"]
+texture = ExtResource("4_pressed")
+texture_margin_left = 18.0
+texture_margin_top = 18.0
+texture_margin_right = 18.0
+texture_margin_bottom = 18.0
+modulate_color = Color(0.1, 0.14, 0.2, 1)
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_btn_disabled"]
+texture = ExtResource("5_disabled")
+texture_margin_left = 18.0
+texture_margin_top = 18.0
+texture_margin_right = 18.0
+texture_margin_bottom = 18.0
+modulate_color = Color(0.1, 0.12, 0.15, 0.5)
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_btn_focus"]
+texture = ExtResource("6_focus")
+texture_margin_left = 18.0
+texture_margin_top = 18.0
+texture_margin_right = 18.0
+texture_margin_bottom = 18.0
+modulate_color = Color(1, 0.88, 0.45, 0.9)
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_panel"]
+texture = ExtResource("7_panel")
+texture_margin_left = 28.0
+texture_margin_top = 28.0
+texture_margin_right = 28.0
+texture_margin_bottom = 28.0
+modulate_color = Color(0.06, 0.08, 0.12, 0.94)
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_tooltip"]
+texture = ExtResource("7_panel")
+texture_margin_left = 18.0
+texture_margin_top = 18.0
+texture_margin_right = 18.0
+texture_margin_bottom = 18.0
+modulate_color = Color(0.04, 0.05, 0.08, 0.96)
+
+[resource]
+default_font = ExtResource("1_font_inter")
+default_font_size = 14
+Button/colors/font_color = Color(1, 0.92, 0.68, 1)
+Button/colors/font_hover_color = Color(1, 1, 1, 1)
+Button/colors/font_pressed_color = Color(0.85, 0.78, 0.55, 1)
+Button/colors/font_disabled_color = Color(0.5, 0.5, 0.5, 0.5)
+Button/colors/font_focus_color = Color(1, 0.95, 0.75, 1)
+Button/colors/font_shadow_color = Color(0, 0, 0, 0.95)
+Button/constants/shadow_offset_x = 1
+Button/constants/shadow_offset_y = 1
+Button/styles/normal = SubResource("StyleBoxTexture_btn_normal")
+Button/styles/hover = SubResource("StyleBoxTexture_btn_hover")
+Button/styles/pressed = SubResource("StyleBoxTexture_btn_pressed")
+Button/styles/disabled = SubResource("StyleBoxTexture_btn_disabled")
+Button/styles/focus = SubResource("StyleBoxTexture_btn_focus")
+Panel/styles/panel = SubResource("StyleBoxTexture_panel")
+PanelContainer/styles/panel = SubResource("StyleBoxTexture_panel")
+TooltipPanel/styles/panel = SubResource("StyleBoxTexture_tooltip")
+TooltipLabel/colors/font_color = Color(0.92, 0.94, 0.96, 1)
+TooltipLabel/colors/font_shadow_color = Color(0, 0, 0, 1)
+TooltipLabel/constants/shadow_offset_x = 1
+TooltipLabel/constants/shadow_offset_y = 1
+TooltipLabel/font_sizes/font_size = 12
+Label/colors/font_color = Color(0.9, 0.92, 0.95, 1)
+Label/colors/font_shadow_color = Color(0, 0, 0, 0.95)
+Label/constants/shadow_offset_x = 1
+Label/constants/shadow_offset_y = 1

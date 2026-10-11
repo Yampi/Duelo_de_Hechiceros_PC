@@ -1,0 +1,44 @@
+[gd_scene load_steps=6 format=3 uid="uid://wizard_cornelius_01"]
+
+[ext_resource type="Script" path="res://scripts/player.gd" id="1_wiz"]
+[ext_resource type="PackedScene" path="res://assets/characters/wizard/WizardModel.tscn" id="2_wizard_model"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_wiz"]
+radius = 0.42
+height = 1.82
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_select"]
+transparency = 1
+albedo_color = Color(0.2, 0.7, 1, 0.8)
+emission_enabled = true
+emission = Color(0.2, 0.7, 1, 1)
+emission_energy_multiplier = 2.0
+
+[sub_resource type="TorusMesh" id="TorusMesh_select"]
+inner_radius = 0.65
+outer_radius = 0.75
+rings = 24
+ring_segments = 16
+
+[node name="Wizard" type="CharacterBody3D" groups=["player"]]
+script = ExtResource("1_wiz")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.91, 0)
+shape = SubResource("CapsuleShape3D_wiz")
+
+[node name="SelectionRing" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 0)
+mesh = SubResource("TorusMesh_select")
+material_override = SubResource("StandardMaterial3D_select")
+
+[node name="Model" parent="." instance=ExtResource("2_wizard_model")]
+transform = Transform3D(-0.0075, 0, 0, 0, 0.0075, 0, 0, 0, -0.0075, 0, 0, 0)
+
+[node name="AimMarker" type="Node3D" parent="."]
+top_level = true
+
+[node name="AimRing" type="MeshInstance3D" parent="AimMarker"]
+transform = Transform3D(0.6, 0, 0, 0, 0.6, 0, 0, 0, 0.6, 0, 0.05, 0)
+mesh = SubResource("TorusMesh_select")
+material_override = SubResource("StandardMaterial3D_select")

@@ -1,0 +1,75 @@
+[gd_scene load_steps=8 format=3 uid="uid://ancient_altar_scene_01"]
+
+[ext_resource type="Script" path="res://scripts/ancient_altar.gd" id="1_altar"]
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_altar"]
+height = 2.0
+radius = 3.5
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_stone"]
+albedo_color = Color(0.18, 0.2, 0.25, 1)
+roughness = 0.8
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_base"]
+material = SubResource("StandardMaterial3D_stone")
+top_radius = 2.4
+bottom_radius = 2.8
+height = 0.6
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_energy"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(0.2, 0.95, 1, 0.45)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_beam"]
+material = SubResource("StandardMaterial3D_energy")
+top_radius = 0.8
+bottom_radius = 0.8
+height = 6.0
+
+[sub_resource type="SphereMesh" id="SphereMesh_mote"]
+radius = 0.08
+height = 0.16
+
+[node name="AncientAltar" type="Area3D" groups=["poi"]]
+collision_layer = 4
+collision_mask = 1
+script = ExtResource("1_altar")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+shape = SubResource("CylinderShape3D_altar")
+
+[node name="BaseMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 0)
+mesh = SubResource("CylinderMesh_base")
+
+[node name="PillarMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+visible = false
+mesh = SubResource("CylinderMesh_beam")
+
+[node name="OmniLight3D" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.8, 0)
+light_color = Color(0.85, 0.45, 1, 1)
+light_energy = 3.0
+omni_range = 8.0
+
+[node name="RuneParticles" type="CPUParticles3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
+emitting = false
+amount = 32
+lifetime = 1.2
+emission_shape = 1
+emission_sphere_radius = 2.0
+gravity = Vector3(0, 3.5, 0)
+mesh = SubResource("SphereMesh_mote")
+
+[node name="PromptLabel" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.2, 0)
+billboard = 1
+no_depth_test = true
+modulate = Color(0.85, 0.45, 1, 1)
+text = "Altar de Transmutación"
+font_size = 24
+outline_size = 6

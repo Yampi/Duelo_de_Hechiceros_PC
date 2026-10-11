@@ -1,0 +1,347 @@
+[gd_scene load_steps=10 format=3 uid="uid://ui_gallery_scene_01"]
+
+[ext_resource type="Script" path="res://scripts/ui/ui_gallery.gd" id="1_gallery"]
+[ext_resource type="Theme" uid="uid://fantasy_theme_duelo_01" path="res://assets/ui/FantasyTheme.tres" id="2_theme"]
+[ext_resource type="FontFile" path="res://assets/ui/fonts/Cinzel.ttf" id="3_font_cinzel"]
+[ext_resource type="PackedScene" uid="uid://fantasy_button_comp_01" path="res://scenes/ui/FantasyButton.tscn" id="4_fbtn"]
+[ext_resource type="PackedScene" uid="uid://fantasy_divider_comp_01" path="res://scenes/ui/FantasyDivider.tscn" id="5_fdiv"]
+[ext_resource type="PackedScene" path="res://scenes/ui/StatBar.tscn" id="6_sbar"]
+[ext_resource type="PackedScene" uid="uid://spell_slot_comp_01" path="res://scenes/ui/SpellSlot.tscn" id="7_sslot"]
+[ext_resource type="PackedScene" uid="uid://fantasy_panel_comp_01" path="res://scenes/ui/FantasyPanel.tscn" id="8_fpanel"]
+[ext_resource type="Texture2D" path="res://assets/ui/icons/consumables/potion_health.png" id="9_pot_hp"]
+[ext_resource type="Texture2D" path="res://assets/ui/icons/consumables/potion_mana.png" id="10_pot_mp"]
+[ext_resource type="Texture2D" path="res://assets/ui/icons/items/item_magic_scroll.png" id="11_scroll"]
+[ext_resource type="Texture2D" path="res://assets/ui/icons/items/item_arcane_crystal.png" id="12_crystal"]
+
+[node name="UIGallery" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_gallery")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.04, 0.05, 0.07, 1)
+
+[node name="Scroll" type="ScrollContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 32.0
+offset_top = 24.0
+offset_right = -32.0
+offset_bottom = -24.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Content" type="VBoxContainer" parent="Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 20
+
+[node name="HeaderBox" type="VBoxContainer" parent="Scroll/Content"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="MainTitle" type="Label" parent="Scroll/Content/HeaderBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.9, 0.65, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_fonts/font = ExtResource("3_font_cinzel")
+theme_override_font_sizes/font_size = 32
+text = "GALERÍA DE COMPONENTES ARCANOS"
+horizontal_alignment = 1
+
+[node name="SubTitle" type="Label" parent="Scroll/Content/HeaderBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.85, 1, 1)
+theme_override_font_sizes/font_size = 14
+text = "Sistema de Diseño Dark Fantasy — Duelo de Hechiceros (DLG-INNOV)"
+horizontal_alignment = 1
+
+[node name="DividerTop" parent="Scroll/Content/HeaderBox" instance=ExtResource("5_fdiv")]
+layout_mode = 2
+
+[node name="ButtonsSection" type="VBoxContainer" parent="Scroll/Content"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="SectionTitle" type="Label" parent="Scroll/Content/ButtonsSection"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.75, 0.45, 1)
+theme_override_fonts/font = ExtResource("3_font_cinzel")
+theme_override_font_sizes/font_size = 20
+text = "VARIACIONES DE BOTONES"
+
+[node name="HBoxButtons" type="HBoxContainer" parent="Scroll/Content/ButtonsSection"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="BtnPrimary" parent="Scroll/Content/ButtonsSection/HBoxButtons" instance=ExtResource("4_fbtn")]
+layout_mode = 2
+text = "PRIMARIO (ORO)"
+
+[node name="BtnPrimaryDis" parent="Scroll/Content/ButtonsSection/HBoxButtons" instance=ExtResource("4_fbtn")]
+layout_mode = 2
+disabled = true
+text = "PRIMARIO (DESACT.)"
+
+[node name="BtnSecondary" parent="Scroll/Content/ButtonsSection/HBoxButtons" instance=ExtResource("4_fbtn")]
+layout_mode = 2
+variant = 1
+text = "SECUNDARIO (HIERRO)"
+
+[node name="BtnSecondaryDis" parent="Scroll/Content/ButtonsSection/HBoxButtons" instance=ExtResource("4_fbtn")]
+layout_mode = 2
+variant = 1
+disabled = true
+text = "SECUNDARIO (DESACT.)"
+
+[node name="BtnDanger" parent="Scroll/Content/ButtonsSection/HBoxButtons" instance=ExtResource("4_fbtn")]
+layout_mode = 2
+variant = 2
+text = "PELIGRO (CARMESÍ)"
+
+[node name="BtnDangerDis" parent="Scroll/Content/ButtonsSection/HBoxButtons" instance=ExtResource("4_fbtn")]
+layout_mode = 2
+variant = 2
+disabled = true
+text = "PELIGRO (DESACT.)"
+
+[node name="BarsSection" type="VBoxContainer" parent="Scroll/Content"]
+name = "BarsSection"
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="SectionTitle" type="Label" parent="Scroll/Content/BarsSection"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.75, 0.45, 1)
+theme_override_fonts/font = ExtResource("3_font_cinzel")
+theme_override_font_sizes/font_size = 20
+text = "BARRAS DE ESTADO Y PROGRESO"
+
+[node name="HBoxBars" type="HBoxContainer" parent="Scroll/Content/BarsSection"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="HpBar" parent="Scroll/Content/BarsSection/HBoxBars" instance=ExtResource("6_sbar")]
+custom_minimum_size = Vector2(250, 48)
+layout_mode = 2
+
+[node name="ManaBar" parent="Scroll/Content/BarsSection/HBoxBars" instance=ExtResource("6_sbar")]
+custom_minimum_size = Vector2(250, 48)
+layout_mode = 2
+bar_type = 1
+
+[node name="StaminaBar" parent="Scroll/Content/BarsSection/HBoxBars" instance=ExtResource("6_sbar")]
+custom_minimum_size = Vector2(250, 48)
+layout_mode = 2
+bar_type = 2
+
+[node name="CastBar" parent="Scroll/Content/BarsSection/HBoxBars" instance=ExtResource("6_sbar")]
+custom_minimum_size = Vector2(250, 48)
+layout_mode = 2
+bar_type = 3
+
+[node name="SlotsSection" type="VBoxContainer" parent="Scroll/Content"]
+name = "SlotsSection"
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="SectionTitle" type="Label" parent="Scroll/Content/SlotsSection"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.75, 0.45, 1)
+theme_override_fonts/font = ExtResource("3_font_cinzel")
+theme_override_font_sizes/font_size = 20
+text = "SLOTS DE ACCIÓN Y HECHIZOS (ESTADOS)"
+
+[node name="HBoxSlots" type="HBoxContainer" parent="Scroll/Content/SlotsSection"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Slot1" parent="Scroll/Content/SlotsSection/HBoxSlots" instance=ExtResource("7_sslot")]
+layout_mode = 2
+tooltip_text = "Centella Arcana [1] - Seleccionado Activo"
+
+[node name="Slot2" parent="Scroll/Content/SlotsSection/HBoxSlots" instance=ExtResource("7_sslot")]
+layout_mode = 2
+slot_index = 2
+spell_id = "fireball"
+hotkey_text = "[2]"
+tooltip_text = "Bola de Fuego [2] - Enfriamiento activo (45%)"
+
+[node name="Slot3" parent="Scroll/Content/SlotsSection/HBoxSlots" instance=ExtResource("7_sslot")]
+layout_mode = 2
+slot_index = 3
+spell_id = "summon_goblin"
+hotkey_text = "[3]"
+tooltip_text = "Invocar Duende [3] - Sin maná suficiente"
+
+[node name="Slot4" parent="Scroll/Content/SlotsSection/HBoxSlots" instance=ExtResource("7_sslot")]
+layout_mode = 2
+slot_index = 4
+spell_id = "shockwave"
+hotkey_text = "[4]"
+tooltip_text = "Habilidad Bloqueada"
+
+[node name="ChipsSection" type="VBoxContainer" parent="Scroll/Content"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="SectionTitle" type="Label" parent="Scroll/Content/ChipsSection"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.75, 0.45, 1)
+theme_override_fonts/font = ExtResource("3_font_cinzel")
+theme_override_font_sizes/font_size = 20
+text = "CHIPS DE REACTIVOS Y CONSUMIBLES"
+
+[node name="HBoxChips" type="HBoxContainer" parent="Scroll/Content/ChipsSection"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Chip1" type="PanelContainer" parent="Scroll/Content/ChipsSection/HBoxChips"]
+layout_mode = 2
+
+[node name="Row" type="HBoxContainer" parent="Scroll/Content/ChipsSection/HBoxChips/Chip1"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Icon" type="TextureRect" parent="Scroll/Content/ChipsSection/HBoxChips/Chip1/Row"]
+custom_minimum_size = Vector2(20, 20)
+layout_mode = 2
+texture = ExtResource("9_pot_hp")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="Scroll/Content/ChipsSection/HBoxChips/Chip1/Row"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Poción Salud x3 [Q]"
+
+[node name="Chip2" type="PanelContainer" parent="Scroll/Content/ChipsSection/HBoxChips"]
+layout_mode = 2
+
+[node name="Row" type="HBoxContainer" parent="Scroll/Content/ChipsSection/HBoxChips/Chip2"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Icon" type="TextureRect" parent="Scroll/Content/ChipsSection/HBoxChips/Chip2/Row"]
+custom_minimum_size = Vector2(20, 20)
+layout_mode = 2
+texture = ExtResource("10_pot_mp")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="Scroll/Content/ChipsSection/HBoxChips/Chip2/Row"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Poción Maná x2 [E]"
+
+[node name="Chip3" type="PanelContainer" parent="Scroll/Content/ChipsSection/HBoxChips"]
+layout_mode = 2
+
+[node name="Row" type="HBoxContainer" parent="Scroll/Content/ChipsSection/HBoxChips/Chip3"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Icon" type="TextureRect" parent="Scroll/Content/ChipsSection/HBoxChips/Chip3/Row"]
+custom_minimum_size = Vector2(20, 20)
+layout_mode = 2
+texture = ExtResource("11_scroll")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="Scroll/Content/ChipsSection/HBoxChips/Chip3/Row"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Pergamino x1"
+
+[node name="Chip4" type="PanelContainer" parent="Scroll/Content/ChipsSection/HBoxChips"]
+layout_mode = 2
+
+[node name="Row" type="HBoxContainer" parent="Scroll/Content/ChipsSection/HBoxChips/Chip4"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Icon" type="TextureRect" parent="Scroll/Content/ChipsSection/HBoxChips/Chip4/Row"]
+custom_minimum_size = Vector2(20, 20)
+layout_mode = 2
+texture = ExtResource("12_crystal")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="Scroll/Content/ChipsSection/HBoxChips/Chip4/Row"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Cristal Arcano x1"
+
+[node name="PanelsSection" type="VBoxContainer" parent="Scroll/Content"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="SectionTitle" type="Label" parent="Scroll/Content/PanelsSection"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.75, 0.45, 1)
+theme_override_fonts/font = ExtResource("3_font_cinzel")
+theme_override_font_sizes/font_size = 20
+text = "PANELES Y CONTENEDORES ARCANOS"
+
+[node name="HBoxPanels" type="HBoxContainer" parent="Scroll/Content/PanelsSection"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="FantasyPanelSample" parent="Scroll/Content/PanelsSection/HBoxPanels" instance=ExtResource("8_fpanel")]
+custom_minimum_size = Vector2(380, 160)
+layout_mode = 2
+title = "PANEL DE INFORMACIÓN"
+
+[node name="SampleText" type="Label" parent="Scroll/Content/PanelsSection/HBoxPanels/FantasyPanelSample/VBox/Content" index="0"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+text = "Este panel modular utiliza marcos NinePatch de Kenney Fantasy Borders modulados en oro envejecido y fondo de obsidiana con 92% alfa, manteniendo la inmersión del entorno 3D."
+autowrap_mode = 2
+
+[node name="ModalDialogSample" parent="Scroll/Content/PanelsSection/HBoxPanels" instance=ExtResource("8_fpanel")]
+custom_minimum_size = Vector2(380, 160)
+layout_mode = 2
+title = "CONFIRMACIÓN ARCANA"
+border_color = Color(0.9, 0.35, 0.35, 1)
+
+[node name="DialogVBox" type="VBoxContainer" parent="Scroll/Content/PanelsSection/HBoxPanels/ModalDialogSample/VBox/Content" index="0"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="DialogText" type="Label" parent="Scroll/Content/PanelsSection/HBoxPanels/ModalDialogSample/VBox/Content/DialogVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+text = "¿Deseas abandonar el círculo de poder actual?"
+
+[node name="DialogBtnRow" type="HBoxContainer" parent="Scroll/Content/PanelsSection/HBoxPanels/ModalDialogSample/VBox/Content/DialogVBox"]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 2
+
+[node name="BtnCancel" parent="Scroll/Content/PanelsSection/HBoxPanels/ModalDialogSample/VBox/Content/DialogVBox/DialogBtnRow" instance=ExtResource("4_fbtn")]
+custom_minimum_size = Vector2(100, 36)
+layout_mode = 2
+variant = 1
+text = "CANCELAR"
+
+[node name="BtnConfirm" parent="Scroll/Content/PanelsSection/HBoxPanels/ModalDialogSample/VBox/Content/DialogVBox/DialogBtnRow" instance=ExtResource("4_fbtn")]
+custom_minimum_size = Vector2(100, 36)
+layout_mode = 2
+variant = 2
+text = "ACEPTAR"
+

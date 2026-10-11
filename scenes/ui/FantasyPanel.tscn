@@ -1,0 +1,79 @@
+[gd_scene load_steps=4 format=3 uid="uid://fantasy_panel_comp_01"]
+
+[ext_resource type="Script" path="res://scripts/ui/fantasy_panel.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/ui/frames/panel-border-001.png" id="2_border"]
+[ext_resource type="Texture2D" path="res://assets/ui/frames/divider-000.png" id="3_divider"]
+
+[node name="FantasyPanel" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 320.0
+offset_bottom = 200.0
+script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 6.0
+offset_top = 6.0
+offset_right = -6.0
+offset_bottom = -6.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.06, 0.08, 0.12, 0.92)
+
+[node name="FrameBorder" type="NinePatchRect" parent="."]
+modulate = Color(0.85, 0.72, 0.35, 1)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_border")
+patch_margin_left = 32
+patch_margin_top = 32
+patch_margin_right = 32
+patch_margin_bottom = 32
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 14.0
+offset_right = -16.0
+offset_bottom = -14.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 8
+
+[node name="Header" type="VBoxContainer" parent="VBox"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="TitleLabel" type="Label" parent="VBox/Header"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.88, 0.45, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.9)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 14
+text = "PANEL ARCANO"
+horizontal_alignment = 1
+
+[node name="Divider" type="TextureRect" parent="VBox/Header"]
+modulate = Color(0.85, 0.72, 0.35, 0.8)
+custom_minimum_size = Vector2(0, 12)
+layout_mode = 2
+texture = ExtResource("3_divider")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Content" type="MarginContainer" parent="VBox"]
+layout_mode = 2
+size_flags_vertical = 3

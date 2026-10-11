@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://test_combat_hud_scene_01"]
+
+[ext_resource type="Script" path="res://scripts/test_combat_hud_capture.gd" id="1_script"]
+
+[node name="TestCombatHUDCapture" type="Node"]
+script = ExtResource("1_script")

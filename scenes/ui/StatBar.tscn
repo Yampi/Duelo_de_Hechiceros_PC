@@ -1,0 +1,144 @@
+[gd_scene load_steps=6 format=3 uid="uid://stat_bar_comp_01"]
+
+[ext_resource type="Script" path="res://scripts/ui/stat_bar.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/ui/frames/panel-border-001.png" id="2_border"]
+[ext_resource type="Texture2D" path="res://assets/ui/bars/bar_track_horizontal.png" id="3_track"]
+[ext_resource type="Texture2D" path="res://assets/ui/bars/bar_hp_fill.png" id="4_fill"]
+[ext_resource type="Texture2D" path="res://assets/ui/icons/consumables/potion_health.png" id="5_icon"]
+
+[node name="StatBar" type="Control"]
+custom_minimum_size = Vector2(210, 44)
+layout_mode = 3
+anchors_preset = 0
+offset_right = 210.0
+offset_bottom = 44.0
+script = ExtResource("1_script")
+
+[node name="HBox" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="IconFrame" type="Control" parent="HBox"]
+custom_minimum_size = Vector2(36, 36)
+layout_mode = 2
+size_flags_vertical = 4
+
+[node name="IconBg" type="ColorRect" parent="HBox/IconFrame"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.08, 0.1, 0.14, 0.95)
+
+[node name="Icon" type="TextureRect" parent="HBox/IconFrame"]
+texture_filter = 4
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 3.0
+offset_top = 3.0
+offset_right = -3.0
+offset_bottom = -3.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("5_icon")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="IconBorder" type="NinePatchRect" parent="HBox/IconFrame"]
+modulate = Color(0.85, 0.72, 0.35, 0.95)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_border")
+patch_margin_left = 12
+patch_margin_top = 12
+patch_margin_right = 12
+patch_margin_bottom = 12
+
+[node name="BarVBox" type="VBoxContainer" parent="HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+alignment = 1
+
+[node name="TopRow" type="HBoxContainer" parent="HBox/BarVBox"]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="HBox/BarVBox/TopRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.9, 0.85, 0.75, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 11
+text = "SALUD"
+
+[node name="ValueLabel" type="Label" parent="HBox/BarVBox/TopRow"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 11
+text = "100 / 100"
+horizontal_alignment = 2
+
+[node name="SubLabel" type="Label" parent="HBox/BarVBox/TopRow"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.85, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 10
+
+[node name="BarContainer" type="Control" parent="HBox/BarVBox"]
+custom_minimum_size = Vector2(0, 16)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="TrailBar" type="TextureProgressBar" parent="HBox/BarVBox/BarContainer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+value = 100.0
+nine_patch_stretch = true
+stretch_margin_left = 6
+stretch_margin_top = 4
+stretch_margin_right = 6
+stretch_margin_bottom = 4
+texture_under = ExtResource("3_track")
+texture_progress = ExtResource("4_fill")
+tint_progress = Color(0.95, 0.6, 0.2, 0.9)
+
+[node name="ProgressBar" type="TextureProgressBar" parent="HBox/BarVBox/BarContainer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+value = 100.0
+nine_patch_stretch = true
+stretch_margin_left = 6
+stretch_margin_top = 4
+stretch_margin_right = 6
+stretch_margin_bottom = 4
+texture_progress = ExtResource("4_fill")
+tint_progress = Color(1, 1, 1, 1)

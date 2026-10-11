@@ -1,0 +1,319 @@
+[gd_scene load_steps=15 format=3 uid="uid://main_menu_v2"]
+
+[ext_resource type="Script" path="res://scripts/main_menu.gd" id="1_menu"]
+[ext_resource type="PackedScene" uid="uid://wizard_cornelius_01" path="res://scenes/Wizard.tscn" id="2_wizard"]
+[ext_resource type="Theme" uid="uid://fantasy_theme_duelo_01" path="res://assets/ui/FantasyTheme.tres" id="3_theme"]
+[ext_resource type="FontFile" path="res://assets/ui/fonts/Cinzel.ttf" id="4_cinzel"]
+[ext_resource type="Texture2D" path="res://assets/ui/frames/divider-000.png" id="5_divider"]
+[ext_resource type="PackedScene" uid="uid://settings_modal_scene_01" path="res://scenes/ui/SettingsModal.tscn" id="6_settings"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_menu"]
+sky_top_color = Color(0.12, 0.18, 0.32, 1)
+sky_horizon_color = Color(0.25, 0.28, 0.38, 1)
+ground_bottom_color = Color(0.06, 0.07, 0.1, 1)
+ground_horizon_color = Color(0.18, 0.2, 0.25, 1)
+
+[sub_resource type="Sky" id="Sky_menu"]
+sky_material = SubResource("ProceduralSkyMaterial_menu")
+
+[sub_resource type="Environment" id="Environment_menu"]
+background_mode = 2
+sky = SubResource("Sky_menu")
+ambient_light_source = 3
+ambient_light_color = Color(0.35, 0.45, 0.6, 1)
+ambient_light_energy = 0.5
+tonemap_mode = 2
+glow_enabled = true
+glow_bloom = 0.15
+fog_enabled = true
+fog_light_color = Color(0.15, 0.2, 0.28, 1)
+fog_density = 0.015
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_floor"]
+albedo_color = Color(0.14, 0.16, 0.2, 1)
+roughness = 0.85
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_floor"]
+material = SubResource("StandardMaterial3D_floor")
+size = Vector2(20, 20)
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_sparks"]
+emission_shape = 1
+emission_sphere_radius = 2.0
+direction = Vector3(0, 1, 0)
+spread = 25.0
+initial_velocity_min = 0.4
+initial_velocity_max = 1.0
+gravity = Vector3(0, 0.1, 0)
+color = Color(0.4, 0.85, 1, 0.6)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_spark"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(0.4, 0.85, 1, 0.8)
+
+[sub_resource type="SphereMesh" id="SphereMesh_spark"]
+material = SubResource("StandardMaterial3D_spark")
+radius = 0.03
+height = 0.06
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_card"]
+bg_color = Color(0.04, 0.06, 0.09, 0.94)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.85, 0.72, 0.35, 0.85)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+content_margin_left = 24.0
+content_margin_top = 20.0
+content_margin_right = 24.0
+content_margin_bottom = 20.0
+
+[node name="MainMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("3_theme")
+script = ExtResource("1_menu")
+
+[node name="ViewportContainer" type="SubViewportContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+stretch = true
+
+[node name="SubViewport" type="SubViewport" parent="ViewportContainer"]
+handle_input_locally = false
+size = Vector2i(1280, 720)
+render_target_update_mode = 4
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="ViewportContainer/SubViewport"]
+environment = SubResource("Environment_menu")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="ViewportContainer/SubViewport"]
+transform = Transform3D(0.866025, -0.25, 0.433013, 0, 0.866025, 0.5, -0.5, -0.433013, 0.75, 2, 4, 3)
+light_color = Color(0.9, 0.95, 1, 1)
+light_energy = 1.2
+shadow_enabled = true
+
+[node name="Floor" type="MeshInstance3D" parent="ViewportContainer/SubViewport"]
+mesh = SubResource("PlaneMesh_floor")
+
+[node name="WizardModel" parent="ViewportContainer/SubViewport" instance=ExtResource("2_wizard")]
+transform = Transform3D(0.866025, 0, 0.5, 0, 1, 0, -0.5, 0, 0.866025, 0.8, 0, 0)
+
+[node name="Sparks" type="GPUParticles3D" parent="ViewportContainer/SubViewport"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.8, 0.8, 0)
+amount = 16
+process_material = SubResource("ParticleProcessMaterial_sparks")
+draw_pass_1 = SubResource("SphereMesh_spark")
+
+[node name="MenuCamera" type="Camera3D" parent="ViewportContainer/SubViewport"]
+transform = Transform3D(0.965926, -0.0449435, 0.254887, 0, 0.984808, 0.173648, -0.258819, -0.167731, 0.951251, 0.8, 1.35, 2.6)
+current = true
+
+[node name="VignetteOverlay" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.02, 0.03, 0.06, 0.45)
+
+[node name="LeftGradient" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 9
+anchor_bottom = 1.0
+offset_right = 520.0
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.03, 0.04, 0.07, 0.75)
+
+[node name="ContentContainer" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 64.0
+offset_top = 48.0
+offset_right = -64.0
+offset_bottom = -48.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="HeaderBox" type="VBoxContainer" parent="ContentContainer"]
+layout_mode = 0
+offset_right = 440.0
+offset_bottom = 120.0
+theme_override_constants/separation = 4
+
+[node name="Title" type="Label" parent="ContentContainer/HeaderBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.88, 0.45, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_fonts/font = ExtResource("4_cinzel")
+theme_override_font_sizes/font_size = 32
+text = "⚔ DUELO DE HECHICEROS"
+
+[node name="Subtitle" type="Label" parent="ContentContainer/HeaderBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.85, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 14
+text = "CRÓNICAS ARCANAS • REMAKE TÁCTICO"
+
+[node name="Divider" type="TextureRect" parent="ContentContainer/HeaderBox"]
+modulate = Color(1, 0.85, 0.35, 0.75)
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2
+texture = ExtResource("5_divider")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="MainNav" type="VBoxContainer" parent="ContentContainer"]
+layout_mode = 0
+offset_top = 160.0
+offset_right = 280.0
+offset_bottom = 440.0
+theme_override_constants/separation = 12
+
+[node name="BtnPlay" type="Button" parent="ContentContainer/MainNav"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+text = "⚔ JUGAR"
+
+[node name="BtnSettings" type="Button" parent="ContentContainer/MainNav"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+text = "⚙ AJUSTES"
+
+[node name="BtnCredits" type="Button" parent="ContentContainer/MainNav"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+text = "📜 CRÉDITOS"
+
+[node name="BtnQuit" type="Button" parent="ContentContainer/MainNav"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+text = "✕ SALIR DEL JUEGO"
+
+[node name="ModesPanel" type="PanelContainer" parent="ContentContainer"]
+visible = false
+custom_minimum_size = Vector2(440, 420)
+layout_mode = 0
+offset_top = 130.0
+offset_right = 460.0
+offset_bottom = 570.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_card")
+
+[node name="VBox" type="VBoxContainer" parent="ContentContainer/ModesPanel"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="ModesTitle" type="Label" parent="ContentContainer/ModesPanel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.88, 0.45, 1)
+theme_override_fonts/font = ExtResource("4_cinzel")
+theme_override_font_sizes/font_size = 18
+text = "SELECCIONA MODO DE JUEGO"
+horizontal_alignment = 1
+
+[node name="BtnSurvival" type="Button" parent="ContentContainer/ModesPanel/VBox"]
+custom_minimum_size = Vector2(0, 68)
+layout_mode = 2
+text = "🛡️ SUPERVIVENCIA
+Resiste oleadas incesantes protegiendo los Santuarios"
+
+[node name="BtnExploration" type="Button" parent="ContentContainer/ModesPanel/VBox"]
+custom_minimum_size = Vector2(0, 68)
+layout_mode = 2
+text = "🧭 EXPLORACIÓN
+Explora el mapa procedural, combate bestias y halla reliquias"
+
+[node name="BtnObjective" type="Button" parent="ContentContainer/ModesPanel/VBox"]
+custom_minimum_size = Vector2(0, 68)
+layout_mode = 2
+text = "🏆 SUPERAR EL NIVEL
+Activa los Santuarios, despierta el Altar y cruza el Portal"
+
+[node name="BtnBackModes" type="Button" parent="ContentContainer/ModesPanel/VBox"]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+text = "◀ VOLVER AL MENÚ"
+
+[node name="CreditsModal" type="PanelContainer" parent="ContentContainer"]
+visible = false
+custom_minimum_size = Vector2(520, 400)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -260.0
+offset_top = -200.0
+offset_right = 260.0
+offset_bottom = 200.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_card")
+
+[node name="VBox" type="VBoxContainer" parent="ContentContainer/CreditsModal"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="CreditsTitle" type="Label" parent="ContentContainer/CreditsModal/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.88, 0.45, 1)
+theme_override_fonts/font = ExtResource("4_cinzel")
+theme_override_font_sizes/font_size = 20
+text = "📜 CRÉDITOS Y LICENCIAS"
+horizontal_alignment = 1
+
+[node name="CreditsText" type="RichTextLabel" parent="ContentContainer/CreditsModal/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+bbcode_enabled = true
+text = "[color=#ffd700]Duelo de Hechiceros - Crónicas Arcanas[/color]
+[color=#66d9ef]Tipografías:[/color] Cinzel (Natanael Gama, OFL) • Inter (Rasmus Andersson, OFL)
+[color=#66d9ef]Interfaz Gráfica:[/color] Kenney Fantasy UI & UI Pack (Kenney, CC0)
+[color=#66d9ef]Iconografía:[/color] Game-Icons.net (CC BY 3.0)
+[color=#66d9ef]Modelos 3D:[/color] Quaternius Animated Wizard Pack (CC0)
+[color=#66d9ef]Audio & Música:[/color] Procedural Synth Engine CC0"
+
+[node name="BtnCloseCredits" type="Button" parent="ContentContainer/CreditsModal/VBox"]
+custom_minimum_size = Vector2(140, 38)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "✕ CERRAR"
+
+[node name="SettingsModal" parent="." instance=ExtResource("6_settings")]
+visible = false
+layout_mode = 1
+
+[node name="ScreenFade" type="ColorRect" parent="."]
+modulate = Color(0, 0, 0, 0)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.02, 0.03, 0.05, 1)

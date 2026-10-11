@@ -1,0 +1,71 @@
+[gd_scene load_steps=8 format=3 uid="uid://main_procedural_01"]
+
+[ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
+[ext_resource type="Script" path="res://scripts/map_generator.gd" id="2_mapgen"]
+[ext_resource type="PackedScene" path="res://scenes/Wizard.tscn" id="3_wiz"]
+[ext_resource type="Script" path="res://scripts/tactical_camera.gd" id="4_cam"]
+[ext_resource type="PackedScene" path="res://scenes/HUD.tscn" id="5_hud"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
+sky_top_color = Color(0.24, 0.48, 0.85, 1)
+sky_horizon_color = Color(0.68, 0.76, 0.86, 1)
+ground_bottom_color = Color(0.15, 0.18, 0.2, 1)
+ground_horizon_color = Color(0.48, 0.58, 0.52, 1)
+
+[sub_resource type="Sky" id="Sky_env"]
+sky_material = SubResource("ProceduralSkyMaterial_sky")
+
+[sub_resource type="Environment" id="Environment_world"]
+background_mode = 2
+sky = SubResource("Sky_env")
+ambient_light_source = 3
+ambient_light_color = Color(0.55, 0.65, 0.78, 1)
+ambient_light_energy = 0.38
+tonemap_mode = 2
+tonemap_exposure = 1.1
+ssao_enabled = true
+ssao_radius = 1.8
+ssao_intensity = 1.8
+glow_enabled = true
+glow_bloom = 0.2
+glow_blend_mode = 1
+fog_enabled = true
+fog_light_color = Color(0.6, 0.7, 0.82, 1)
+fog_density = 0.005
+fog_aerial_perspective = 0.4
+
+[node name="Main" type="Node3D"]
+script = ExtResource("1_main")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_world")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.819152, -0.321394, 0.474681, 0, 0.829038, 0.559193, -0.573576, -0.458064, 0.679106, 0, 30, 0)
+light_color = Color(1, 0.95, 0.88, 1)
+light_energy = 1.5
+shadow_enabled = true
+directional_shadow_max_distance = 90.0
+directional_shadow_blend_splits = true
+
+[node name="MapGenerator" type="Node3D" parent="."]
+script = ExtResource("2_mapgen")
+
+[node name="Wizard" parent="." instance=ExtResource("3_wiz")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+
+[node name="CameraRig" type="Node3D" parent="." node_paths=PackedStringArray("follow_target")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, 0)
+script = ExtResource("4_cam")
+follow_target = NodePath("../Wizard")
+
+[node name="SpringArm3D" type="SpringArm3D" parent="CameraRig"]
+transform = Transform3D(1, 0, 0, 0, 0.939693, 0.34202, 0, -0.34202, 0.939693, 0, 0, 0)
+spring_length = 6.5
+margin = 0.25
+
+[node name="Camera3D" type="Camera3D" parent="CameraRig/SpringArm3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+fov = 68.0
+
+[node name="HUD" parent="." instance=ExtResource("5_hud")]

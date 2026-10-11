@@ -1,0 +1,32 @@
+[gd_scene load_steps=5 format=3 uid="uid://fruit_pickup_01"]
+
+[ext_resource type="Script" path="res://scripts/fruit_pickup.gd" id="1_fruit"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_apple"]
+radius = 0.22
+height = 0.4
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_red"]
+albedo_color = Color(0.95, 0.15, 0.15, 1)
+roughness = 0.3
+emission_enabled = true
+emission = Color(0.8, 0.1, 0.1, 1)
+emission_energy_multiplier = 1.5
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_hit"]
+radius = 0.75
+
+[node name="FruitPickup" type="Area3D"]
+script = ExtResource("1_fruit")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("SphereShape3D_hit")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("SphereMesh_apple")
+material_override = SubResource("StandardMaterial3D_red")
+
+[node name="OmniLight3D" type="OmniLight3D" parent="."]
+light_color = Color(1, 0.2, 0.2, 1)
+light_energy = 1.8
+omni_range = 2.5

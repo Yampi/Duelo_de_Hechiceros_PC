@@ -1,0 +1,155 @@
+[gd_scene load_steps=4 format=3 uid="uid://world_map_modal_scene_01"]
+
+[ext_resource type="Script" path="res://scripts/ui/world_map_modal.gd" id="1_map_script"]
+[ext_resource type="Texture2D" path="res://assets/ui/frames/panel-border-001.png" id="2_border"]
+[ext_resource type="Theme" uid="uid://fantasy_theme_duelo_01" path="res://assets/ui/FantasyTheme.tres" id="3_theme"]
+
+[node name="WorldMapModal" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_map_script")
+
+[node name="DimOverlay" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.6)
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="Control" parent="CenterContainer"]
+custom_minimum_size = Vector2(820, 540)
+layout_mode = 2
+
+[node name="Bg" type="ColorRect" parent="CenterContainer/Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 6.0
+offset_top = 6.0
+offset_right = -6.0
+offset_bottom = -6.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.06, 0.08, 0.12, 0.96)
+
+[node name="FrameBorder" type="NinePatchRect" parent="CenterContainer/Panel"]
+modulate = Color(0.85, 0.72, 0.35, 1)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_border")
+patch_margin_left = 32
+patch_margin_top = 32
+patch_margin_right = 32
+patch_margin_bottom = 32
+
+[node name="VBox" type="VBoxContainer" parent="CenterContainer/Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 22.0
+offset_top = 18.0
+offset_right = -22.0
+offset_bottom = -18.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 10
+
+[node name="TopRow" type="HBoxContainer" parent="CenterContainer/Panel/VBox"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="CenterContainer/Panel/VBox/TopRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 0.88, 0.45, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 17
+text = "CARTOGRAFÍA DEL MUNDO ARCANO"
+
+[node name="BtnClose" type="Button" parent="CenterContainer/Panel/VBox/TopRow"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+text = "✕"
+
+[node name="BodyHBox" type="HBoxContainer" parent="CenterContainer/Panel/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 16
+
+[node name="MapCanvas" type="Control" parent="CenterContainer/Panel/VBox/BodyHBox"]
+custom_minimum_size = Vector2(460, 440)
+layout_mode = 2
+
+[node name="RightSection" type="VBoxContainer" parent="CenterContainer/Panel/VBox/BodyHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="LblCurrentZone" type="Label" parent="CenterContainer/Panel/VBox/BodyHBox/RightSection"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.3, 0.95, 0.5, 1)
+theme_override_font_sizes/font_size = 14
+text = "Zona Actual: Pradera Inicial"
+
+[node name="LblObjectiveTitle" type="Label" parent="CenterContainer/Panel/VBox/BodyHBox/RightSection"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.35, 1)
+theme_override_font_sizes/font_size = 13
+text = "Objetivo Actual:"
+
+[node name="LblObjective" type="Label" parent="CenterContainer/Panel/VBox/BodyHBox/RightSection"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.9, 0.9, 0.9)
+theme_override_font_sizes/font_size = 12
+text = "Explora el Bosque y encuentra el Cristal Arcano"
+autowrap_mode = 2
+
+[node name="HSeparator" type="HSeparator" parent="CenterContainer/Panel/VBox/BodyHBox/RightSection"]
+layout_mode = 2
+
+[node name="LegendTitle" type="Label" parent="CenterContainer/Panel/VBox/BodyHBox/RightSection"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.75, 0.6, 1)
+theme_override_font_sizes/font_size = 13
+text = "Leyenda Cartográfica:"
+
+[node name="LegendContent" type="VBoxContainer" parent="CenterContainer/Panel/VBox/BodyHBox/RightSection"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 6
+
+[node name="BtnCloseModal" type="Button" parent="CenterContainer/Panel/VBox/BodyHBox/RightSection"]
+custom_minimum_size = Vector2(160, 40)
+layout_mode = 2
+size_flags_horizontal = 4
+theme = ExtResource("3_theme")
+theme_override_font_sizes/font_size = 13
+text = "CERRAR MAPA [M]"
+
+[node name="BottomHelp" type="Label" parent="CenterContainer/Panel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.6, 0.6, 0.8)
+theme_override_font_sizes/font_size = 11
+text = "• Tecla [M] o [ESC] para cerrar  |  La exploración revela zonas, senderos y secretos en tiempo real"
+horizontal_alignment = 1

@@ -1,0 +1,112 @@
+[gd_scene load_steps=12 format=3 uid="uid://ice_projectile_01"]
+
+[ext_resource type="Script" path="res://scripts/ice_projectile.gd" id="1_ice"]
+[ext_resource type="Texture2D" path="res://assets/vfx/textures/snowflake_crystal.png" id="2_snow"]
+[ext_resource type="Texture2D" path="res://assets/vfx/textures/spark_star.png" id="3_spark"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ice"]
+transparency = 1
+albedo_color = Color(0.65, 0.92, 1, 0.82)
+roughness = 0.15
+emission_enabled = true
+emission = Color(0.3, 0.8, 1, 1)
+emission_energy_multiplier = 1.6
+rim_enabled = true
+rim = 0.85
+rim_tint = 0.4
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_icicle"]
+material = SubResource("StandardMaterial3D_ice")
+top_radius = 0.02
+bottom_radius = 0.16
+height = 0.75
+radial_segments = 5
+
+[sub_resource type="PrismMesh" id="PrismMesh_shard"]
+material = SubResource("StandardMaterial3D_ice")
+left_to_right = 0.5
+size = Vector3(0.08, 0.22, 0.06)
+
+[sub_resource type="Curve" id="Curve_frost"]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), -1.4, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_frost_mote"]
+transparency = 1
+blend_mode = 1
+shading_mode = 0
+albedo_color = Color(0.7, 0.95, 1, 0.92)
+albedo_texture = ExtResource("2_snow")
+billboard_mode = 3
+billboard_keep_scale = true
+
+[sub_resource type="QuadMesh" id="QuadMesh_mote"]
+material = SubResource("StandardMaterial3D_frost_mote")
+size = Vector2(0.24, 0.24)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_shatter"]
+transparency = 1
+blend_mode = 1
+shading_mode = 0
+albedo_color = Color(0.8, 0.96, 1, 0.95)
+albedo_texture = ExtResource("3_spark")
+billboard_mode = 3
+billboard_keep_scale = true
+
+[sub_resource type="QuadMesh" id="QuadMesh_shatter"]
+material = SubResource("StandardMaterial3D_shatter")
+size = Vector2(0.3, 0.3)
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_hit"]
+radius = 0.35
+
+[node name="IceProjectile" type="Node3D"]
+script = ExtResource("1_ice")
+
+[node name="Visuals" type="Node3D" parent="."]
+
+[node name="IcicleCore" type="MeshInstance3D" parent="Visuals"]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0)
+mesh = SubResource("CylinderMesh_icicle")
+
+[node name="FlankShard1" type="MeshInstance3D" parent="Visuals"]
+transform = Transform3D(0.866025, 0.5, 0, -0.5, 0.866025, 0, 0, 0, 1, 0.12, 0, -0.1)
+mesh = SubResource("PrismMesh_shard")
+
+[node name="FlankShard2" type="MeshInstance3D" parent="Visuals"]
+transform = Transform3D(0.866025, -0.5, 0, 0.5, 0.866025, 0, 0, 0, 1, -0.12, 0, -0.1)
+mesh = SubResource("PrismMesh_shard")
+
+[node name="FrostTrail" type="CPUParticles3D" parent="."]
+amount = 24
+lifetime = 0.38
+emission_shape = 1
+emission_sphere_radius = 0.1
+gravity = Vector3(0, -0.5, 0)
+scale_amount_curve = SubResource("Curve_frost")
+mesh = SubResource("QuadMesh_mote")
+
+[node name="ShatterBurst" type="CPUParticles3D" parent="."]
+emitting = false
+amount = 26
+lifetime = 0.4
+one_shot = true
+explosiveness = 0.94
+spread = 180.0
+initial_velocity_min = 4.0
+initial_velocity_max = 9.0
+gravity = Vector3(0, -4.0, 0)
+scale_amount_curve = SubResource("Curve_frost")
+mesh = SubResource("QuadMesh_shatter")
+
+[node name="OmniLight3D" type="OmniLight3D" parent="."]
+light_color = Color(0.4, 0.85, 1, 1)
+light_energy = 2.2
+omni_range = 4.0
+
+[node name="Area3D" type="Area3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D"]
+shape = SubResource("SphereShape3D_hit")
+
+[connection signal="body_entered" from="Area3D" to="." method="_on_area_3d_body_entered"]

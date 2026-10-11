@@ -1,0 +1,81 @@
+[gd_scene load_steps=10 format=3 uid="uid://fire_spit_01"]
+
+[ext_resource type="Script" path="res://scripts/fire_spit.gd" id="1_spit"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_magma"]
+shading_mode = 0
+albedo_color = Color(1, 0.4, 0.05, 1)
+
+[sub_resource type="SphereMesh" id="SphereMesh_core"]
+material = SubResource("StandardMaterial3D_magma")
+radius = 0.14
+height = 0.28
+
+[sub_resource type="Curve" id="Curve_trail"]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), -1.3, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ember"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(1, 0.3, 0.05, 0.85)
+
+[sub_resource type="SphereMesh" id="SphereMesh_ember"]
+material = SubResource("StandardMaterial3D_ember")
+radius = 0.05
+height = 0.1
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_splash"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(1, 0.55, 0.1, 1)
+
+[sub_resource type="SphereMesh" id="SphereMesh_splash"]
+material = SubResource("StandardMaterial3D_splash")
+radius = 0.07
+height = 0.14
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_hit"]
+radius = 0.32
+
+[node name="FireSpit" type="Node3D"]
+script = ExtResource("1_spit")
+
+[node name="Visuals" type="Node3D" parent="."]
+
+[node name="CoreMesh" type="MeshInstance3D" parent="Visuals"]
+mesh = SubResource("SphereMesh_core")
+
+[node name="MagmaTrail" type="CPUParticles3D" parent="."]
+amount = 14
+lifetime = 0.28
+emission_shape = 1
+emission_sphere_radius = 0.06
+gravity = Vector3(0, 0.8, 0)
+scale_amount_curve = SubResource("Curve_trail")
+mesh = SubResource("SphereMesh_ember")
+
+[node name="SplashBurst" type="CPUParticles3D" parent="."]
+emitting = false
+amount = 16
+lifetime = 0.32
+one_shot = true
+explosiveness = 0.92
+spread = 180.0
+initial_velocity_min = 3.0
+initial_velocity_max = 6.0
+gravity = Vector3(0, -5.0, 0)
+scale_amount_curve = SubResource("Curve_trail")
+mesh = SubResource("SphereMesh_splash")
+
+[node name="OmniLight3D" type="OmniLight3D" parent="."]
+light_color = Color(1, 0.45, 0.1, 1)
+light_energy = 2.2
+omni_range = 3.0
+
+[node name="Area3D" type="Area3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D"]
+shape = SubResource("SphereShape3D_hit")
+
+[connection signal="body_entered" from="Area3D" to="." method="_on_area_3d_body_entered"]

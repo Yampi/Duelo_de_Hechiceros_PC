@@ -1,0 +1,72 @@
+[gd_scene load_steps=10 format=3 uid="uid://arcane_shield_01"]
+
+[ext_resource type="Script" path="res://scripts/arcane_shield.gd" id="1_shield"]
+[ext_resource type="Shader" path="res://assets/vfx/shaders/fresnel_shield.gdshader" id="2_shader"]
+[ext_resource type="Texture2D" path="res://assets/vfx/textures/light_mote.png" id="3_mote"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_barrier"]
+render_priority = 0
+shader = ExtResource("2_shader")
+shader_parameter/shield_color = Color(0.25, 0.75, 1, 0.85)
+shader_parameter/rim_color = Color(0.8, 0.95, 1, 1)
+shader_parameter/fresnel_power = 2.4
+shader_parameter/hex_scale = 18.0
+shader_parameter/pulse_speed = 2.5
+shader_parameter/hit_intensity = 0.0
+shader_parameter/hit_point = Vector3(0, 0, 0)
+
+[sub_resource type="SphereMesh" id="SphereMesh_dome"]
+material = SubResource("ShaderMaterial_barrier")
+radius = 1.15
+height = 2.3
+radial_segments = 24
+rings = 16
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ring"]
+transparency = 1
+blend_mode = 1
+shading_mode = 0
+albedo_color = Color(0.4, 0.85, 1, 0.85)
+
+[sub_resource type="TorusMesh" id="TorusMesh_edge"]
+material = SubResource("StandardMaterial3D_ring")
+inner_radius = 1.12
+outer_radius = 1.22
+rings = 24
+ring_segments = 16
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_motes"]
+transparency = 1
+blend_mode = 1
+shading_mode = 0
+albedo_color = Color(0.5, 0.9, 1, 0.95)
+albedo_texture = ExtResource("3_mote")
+billboard_mode = 3
+billboard_keep_scale = true
+
+[sub_resource type="QuadMesh" id="QuadMesh_mote"]
+material = SubResource("StandardMaterial3D_motes")
+size = Vector2(0.2, 0.2)
+
+[node name="ArcaneShield" type="Node3D"]
+script = ExtResource("1_shield")
+
+[node name="ShieldMesh" type="MeshInstance3D" parent="."]
+mesh = SubResource("SphereMesh_dome")
+
+[node name="EdgeRing" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.866025, 0.5, 0, -0.5, 0.866025, 0, 0, 0)
+mesh = SubResource("TorusMesh_edge")
+
+[node name="OrbitMotes" type="CPUParticles3D" parent="."]
+amount = 18
+lifetime = 1.2
+emission_shape = 1
+emission_sphere_radius = 1.25
+gravity = Vector3(0, 0.2, 0)
+mesh = SubResource("QuadMesh_mote")
+
+[node name="OmniLight3D" type="OmniLight3D" parent="."]
+light_color = Color(0.25, 0.8, 1, 1)
+light_energy = 3.0
+omni_range = 5.0

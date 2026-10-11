@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://io7380yr1kgf"
+path="res://.godot/imported/Warrior_Sword.obj-92937120f782e74bffca5d6794ca51c7.mesh"
+
+[deps]
+
+files=["res://.godot/imported/Warrior_Sword.obj-92937120f782e74bffca5d6794ca51c7.mesh"]
+
+source_file="res://assets/downloads/rpg_characters/RPG Characters - Nov 2020/OBJ/Only Weapons/Warrior_Sword.obj"
+dest_files=["res://.godot/imported/Warrior_Sword.obj-92937120f782e74bffca5d6794ca51c7.mesh", "res://.godot/imported/Warrior_Sword.obj-92937120f782e74bffca5d6794ca51c7.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false
