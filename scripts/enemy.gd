@@ -77,6 +77,12 @@ var last_known_target_pos: Vector3 = Vector3.ZERO
 var los_lost_timer: float = 0.0
 var target_cooldown: float = 0.0
 
+# Performance throttling caches
+var _cached_separation: Vector3 = Vector3.ZERO
+var _separation_calc_frame: int = -1
+var _cached_los: bool = true
+var _los_check_timer: float = 0.0
+
 # Tactical CC (Chill / Slow from Ice spells)
 var chill_timer: float = 0.0
 var chill_slow_factor: float = 0.55
@@ -481,6 +487,10 @@ func transition_to_state(new_state: AIState, duration: float = 0.0) -> void:
 func has_line_of_sight_to(target: Node3D) -> bool:
 	if not is_inside_tree() or target == null:
 		return true
+	if _los_check_timer > 0.0:
+		return _cached_los
+	_los_check_timer = randf_range(0.16, 0.24)
+	
 	var world_3d = get_world_3d()
 	if not world_3d:
 		return true
@@ -500,12 +510,12 @@ func has_line_of_sight_to(target: Node3D) -> bool:
 	
 	var result = space_state.intersect_ray(query)
 	if result.is_empty():
+		_cached_los = true
 		return true
 	
 	var hit = result.get("collider")
-	if hit == target or (hit and hit.get_parent() == target):
-		return true
-	return false
+	_cached_los = (hit == target or (hit and hit.get_parent() == target))
+	return _cached_los
 
 func detect_player() -> Node3D:
 	if target_cooldown > 0.0:
@@ -556,19 +566,42 @@ func notify_investigate(new_target: Node3D, pos: Vector3) -> void:
 		transition_to_state(AIState.ALERT, alert_duration)
 
 func get_separation_force() -> Vector3:
+	var current_frame = Engine.get_physics_frames()
+	if (current_frame + get_instance_id()) % 5 != 0 and _separation_calc_frame >= 0:
+		return _cached_separation
+	
+	_separation_calc_frame = current_frame
 	var total_force = Vector3.ZERO
+	var checked_count = 0
 	for other in get_tree().get_nodes_in_group("enemy"):
 		if other != self and is_instance_valid(other):
 			var sep_diff = global_position - other.global_position
 			sep_diff.y = 0.0
-			var d = sep_diff.length()
-			if d > 0.001 and d < 1.8:
+			var d_sq = sep_diff.length_squared()
+			if d_sq > 0.001 and d_sq < 3.24: # 1.8 * 1.8
+				var d = sqrt(d_sq)
 				total_force += (sep_diff / d) * (1.8 - d) * 4.5
-	return total_force
+				checked_count += 1
+				if checked_count >= 4:
+					break
+	_cached_separation = total_force
+	return _cached_separation
 
 func _physics_process(delta: float) -> void:
 	if is_dead:
 		return
+	
+	_los_check_timer = max(0.0, _los_check_timer - delta)
+	
+	# Far-distance hibernation when unaggroed
+	if target_ref == null:
+		var p_nodes = get_tree().get_nodes_in_group("player")
+		if p_nodes.size() > 0 and is_instance_valid(p_nodes[0]):
+			var dist_sq = global_position.distance_squared_to(p_nodes[0].global_position)
+			if dist_sq > 2704.0: # 52m
+				velocity.x = 0.0
+				velocity.z = 0.0
+				return
 	
 	if not is_boss and hp_bar and hp_bar.visible:
 		if show_hp_timer > 0.0:

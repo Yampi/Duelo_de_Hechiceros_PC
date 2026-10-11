@@ -12,8 +12,11 @@ var enemy_scene: PackedScene = preload("res://scenes/Enemy.tscn")
 var encounter_manager: EncounterManager = null
 
 var wave_timer: float = 0.0
-var wave_interval: float = 22.0
+var wave_interval: float = 24.0
 var boss_announced: bool = false
+const MAX_SURVIVAL_ACTIVE_ENEMIES: int = 12
+var survival_spawn_queue: Array[Dictionary] = []
+var _queue_drain_timer: float = 0.0
 
 func _ready() -> void:
 	# Generate 256x256m bounded 4-zone map
@@ -117,41 +120,77 @@ func _on_boss_encounter_started() -> void:
 func _process_survival(delta: float) -> void:
 	GameManager.survival_time += delta
 	wave_timer += delta
+	_queue_drain_timer += delta
 	
 	var mins = int(GameManager.survival_time) / 60
 	var secs = int(GameManager.survival_time) % 60
 	var enemies_alive = get_tree().get_nodes_in_group("enemy").size()
 	
+	# Drain spawn queue if below active cap
+	if _queue_drain_timer >= 0.8:
+		_queue_drain_timer = 0.0
+		while enemies_alive < MAX_SURVIVAL_ACTIVE_ENEMIES and survival_spawn_queue.size() > 0:
+			var next_enemy_data = survival_spawn_queue.pop_front()
+			_spawn_queued_enemy(next_enemy_data)
+			enemies_alive += 1
+	
+	var queue_text = " (En reserva: %d)" % survival_spawn_queue.size() if survival_spawn_queue.size() > 0 else ""
 	hud.update_mode_hud(
 		"⚔ MODO SUPERVIVENCIA",
 		"Oleada %d | Tiempo: %02d:%02d" % [GameManager.wave, mins, secs],
-		"Enemigos restantes: %d (Bajas: %d)" % [enemies_alive, GameManager.enemies_defeated]
+		"Enemigos activos: %d%s | Bajas: %d" % [enemies_alive, queue_text, GameManager.enemies_defeated]
 	)
 	
-	# Spawn next wave if timer expires or all enemies cleared
-	if wave_timer >= wave_interval or (enemies_alive == 0 and wave_timer > 4.0):
+	# Spawn next wave if timer expires or all enemies cleared (active + queue)
+	var all_cleared = (enemies_alive == 0 and survival_spawn_queue.is_empty())
+	if all_cleared and wave_timer > 3.0:
+		wave_timer = 0.0
+		GameManager.wave += 1
+		_spawn_survival_wave(GameManager.wave)
+	elif wave_timer >= wave_interval and survival_spawn_queue.size() < 6:
 		wave_timer = 0.0
 		GameManager.wave += 1
 		_spawn_survival_wave(GameManager.wave)
 
 func _spawn_survival_wave(wave_num: int) -> void:
-	var count = 4 + (wave_num * 2)
-	for i in range(count):
-		var angle = randf() * TAU
-		var dist = randf_range(26.0, 44.0)
-		var spawn_pos = player.global_position + Vector3(cos(angle) * dist, 0.0, sin(angle) * dist)
+	var total_count = 4 + (wave_num * 2)
+	var is_boss_wave = (wave_num % 3 == 0)
+	
+	for i in range(total_count):
+		var is_boss = (is_boss_wave and i == 0)
+		var arch_type = 1 if is_boss else (randi() % 5)
 		
-		var enemy = enemy_scene.instantiate()
-		var type_roll = randi() % 5
-		enemy.set_archetype(type_roll)
+		var enemy_data = {
+			"archetype": arch_type,
+			"is_boss": is_boss
+		}
 		
-		# Boss enemy in later waves
-		if wave_num % 3 == 0 and i == 0:
-			enemy.is_boss = true
-			enemy.set_archetype(1) # Skeleton Spear
-		
-		enemy.position = spawn_pos
-		add_child(enemy)
+		# Boss gets inserted at the front of the queue
+		if is_boss:
+			survival_spawn_queue.push_front(enemy_data)
+		else:
+			survival_spawn_queue.append(enemy_data)
+	
+	# Immediately trigger a queue drain
+	_queue_drain_timer = 1.0
+
+func _spawn_queued_enemy(data: Dictionary) -> void:
+	if not player:
+		return
+	var angle = randf() * TAU
+	var dist = randf_range(24.0, 38.0)
+	var spawn_pos = player.global_position + Vector3(cos(angle) * dist, 0.0, sin(angle) * dist)
+	spawn_pos.y = MapConfig.get_height_at(spawn_pos.x, spawn_pos.z) + 0.1
+	
+	var enemy = enemy_scene.instantiate()
+	enemy.set_archetype(data.get("archetype", 0))
+	if data.get("is_boss", false):
+		enemy.is_boss = true
+		enemy.set_archetype(1)
+		GameManager.spawn_damage_number(player.global_position + Vector3(0, 2.0, 0), "👑 ¡JEFE DE OLEADA!", Color(1.0, 0.3, 0.8), 1.5)
+	
+	enemy.position = spawn_pos
+	add_child(enemy)
 
 func _process_exploration(_delta: float) -> void:
 	var z_data = MapConfig.get_zone_data(encounter_manager.current_zone) if encounter_manager else {}

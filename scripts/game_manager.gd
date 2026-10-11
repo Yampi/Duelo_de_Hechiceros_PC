@@ -264,6 +264,8 @@ func return_to_main_menu() -> void:
 	get_tree().change_scene_to_file("res://scenes/MainMenu.tscn")
 
 var damage_number_scene: PackedScene = preload("res://scenes/DamageNumber.tscn")
+var _damage_number_pool: Array[Node3D] = []
+const MAX_DAMAGE_NUMBER_POOL_SIZE: int = 40
 
 func shake_camera(amount: float = 0.35) -> void:
 	get_tree().call_group("camera", "add_trauma", amount)
@@ -272,7 +274,25 @@ func spawn_damage_number(world_pos: Vector3, text: String, color: Color = Color.
 	var root = get_tree().current_scene
 	if not root:
 		return
-	var dn = damage_number_scene.instantiate()
-	root.add_child(dn)
+	
+	var dn: Node3D = null
+	while _damage_number_pool.size() > 0:
+		var candidate = _damage_number_pool.pop_back()
+		if is_instance_valid(candidate) and candidate.is_inside_tree():
+			dn = candidate
+			break
+	
+	if not dn:
+		dn = damage_number_scene.instantiate()
+		dn.in_pool = true
+		dn.finished.connect(_on_damage_number_finished)
+		root.add_child(dn)
+	
 	dn.global_position = world_pos + Vector3(0, 1.2, 0)
 	dn.setup(text, color, scale_mult)
+
+func _on_damage_number_finished(dn: Node3D) -> void:
+	if is_instance_valid(dn) and _damage_number_pool.size() < MAX_DAMAGE_NUMBER_POOL_SIZE:
+		_damage_number_pool.append(dn)
+	elif is_instance_valid(dn):
+		dn.queue_free()

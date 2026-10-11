@@ -195,6 +195,7 @@ func _create_perimeter_barriers() -> void:
 		
 		var r_scale = randf_range(1.6, 2.4)
 		rock_node.scale = Vector3(r_scale, r_scale * 1.5, r_scale)
+		_apply_visibility_cull(rock_node, 95.0)
 		add_child(rock_node)
 		var rx = pt.x + randf_range(-1.5, 1.5)
 		var rz = pt.z + randf_range(-1.5, 1.5)
@@ -206,6 +207,7 @@ func _create_perimeter_barriers() -> void:
 		if randf() < 0.65:
 			var pine = tree_pine1_scene.instantiate()
 			pine.scale = Vector3(1.3, 1.3, 1.3)
+			_apply_visibility_cull(pine, 100.0)
 			add_child(pine)
 			var px = pt.x + randf_range(-2.0, 2.0)
 			var pz = pt.z + randf_range(-2.0, 2.0)
@@ -311,6 +313,7 @@ func _build_zone1_pradera() -> void:
 		var f_pos = Vector3(fx, fy, fz)
 		var fl = flower_scene.instantiate() if i % 2 == 0 else clover_scene.instantiate()
 		fl.scale = Vector3(1.3, 1.3, 1.3)
+		_apply_visibility_cull(fl, 50.0)
 		add_child(fl)
 		fl.global_position = f_pos
 	
@@ -412,6 +415,7 @@ func _build_zone3_corazon_bosque() -> void:
 		var my = MapConfig.get_height_at(mx, mz)
 		var mush = mushroom_orange_scene.instantiate()
 		mush.scale = Vector3(1.3, 1.3, 1.3)
+		_apply_visibility_cull(mush, 50.0)
 		add_child(mush)
 		mush.global_position = Vector3(mx, my, mz)
 
@@ -502,6 +506,7 @@ func _spawn_shrine_complex(pos: Vector3) -> void:
 func _spawn_ruin_column(pos: Vector3, with_torch: bool = false) -> void:
 	pos.y = MapConfig.get_height_at(pos.x, pos.z)
 	var col_node = column_scene.instantiate()
+	_apply_visibility_cull(col_node, 110.0)
 	add_child(col_node)
 	col_node.global_position = pos
 	col_node.scale = Vector3(0.85, 0.85, 0.85)
@@ -521,6 +526,7 @@ func _spawn_ruin_column(pos: Vector3, with_torch: bool = false) -> void:
 	
 	if with_torch:
 		var torch = torch_scene.instantiate()
+		_apply_visibility_cull(torch, 70.0)
 		add_child(torch)
 		torch.global_position = pos + Vector3(0, 1.6, 0.6)
 		torch.scale = Vector3(0.8, 0.8, 0.8)
@@ -553,6 +559,7 @@ func _spawn_tree_grove(center: Vector3, count: int, type_pref: String) -> void:
 			tree_node.scale = Vector3(1.05, 1.05, 1.05)
 			col_radius = 0.5
 		
+		_apply_visibility_cull(tree_node, 100.0)
 		add_child(tree_node)
 		tree_node.global_position = tree_pos
 		tree_node.rotation.y = randf() * TAU
@@ -580,6 +587,7 @@ func _spawn_rock_at(pos: Vector3, r_scale: float) -> void:
 		rock_node = rock_m3_scene.instantiate()
 	
 	rock_node.scale = Vector3(r_scale, r_scale, r_scale)
+	_apply_visibility_cull(rock_node, 95.0)
 	add_child(rock_node)
 	rock_node.global_position = pos
 	rock_node.rotation.y = randf() * TAU
@@ -593,6 +601,12 @@ func _spawn_rock_at(pos: Vector3, r_scale: float) -> void:
 	col.position = pos + Vector3(0, 0.8 * r_scale, 0)
 	rock_body.add_child(col)
 	add_child(rock_body)
+
+func _apply_visibility_cull(node: Node, max_dist: float) -> void:
+	if node is VisualInstance3D:
+		node.visibility_range_end = max_dist
+	for child in node.get_children():
+		_apply_visibility_cull(child, max_dist)
 
 func _generate_pickups_and_reagents() -> void:
 	# Contextual World Item placements linked to POIs and exploration

@@ -9,6 +9,10 @@ var lifetime: float = 0.85
 var timer: float = 0.0
 var _initial_scale: float = 1.0
 
+signal finished(node: Node3D)
+
+var in_pool: bool = false
+
 func setup_styled(amount_or_text: Variant, type: Type = Type.DAMAGE) -> void:
 	if not label:
 		label = $Label3D
@@ -50,12 +54,20 @@ func setup(text: String, color: Color = Color.WHITE, scale_mult: float = 1.0) ->
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	_initial_scale = scale_mult
 	scale = Vector3.ONE * _initial_scale
+	timer = 0.0
+	visible = true
+	set_process(true)
+	
+	# Random 3D offset to prevent overlapping text clusters
+	velocity = Vector3(
+		randf_range(-0.75, 0.75),
+		2.6,
+		randf_range(-0.75, 0.75)
+	)
 
 func _ready() -> void:
-	# Random 3D offset to prevent overlapping text clusters
-	position += Vector3(randf_range(-0.45, 0.45), randf_range(-0.15, 0.25), randf_range(-0.45, 0.45))
-	velocity.x += randf_range(-0.75, 0.75)
-	velocity.z += randf_range(-0.75, 0.75)
+	if not in_pool:
+		position += Vector3(randf_range(-0.45, 0.45), randf_range(-0.15, 0.25), randf_range(-0.45, 0.45))
 
 func _process(delta: float) -> void:
 	timer += delta
@@ -64,7 +76,12 @@ func _process(delta: float) -> void:
 	
 	var progress = timer / lifetime
 	if progress >= 1.0:
-		queue_free()
+		if in_pool:
+			visible = false
+			set_process(false)
+			finished.emit(self)
+		else:
+			queue_free()
 		return
 	
 	# Scale punch pop with ease-out, followed by gentle fade
