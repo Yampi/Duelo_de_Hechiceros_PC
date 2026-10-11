@@ -16,6 +16,8 @@ const SPELLS: Dictionary = {
 	"ice_projectile": "res://assets/ui/icons/spells/spell_ice_projectile.png",
 	"lightning": "res://assets/ui/icons/spells/spell_lightning.png",
 	"arcane_shield": "res://assets/ui/icons/spells/spell_arcane_shield.png",
+	"earth_fissure": "res://assets/ui/icons/spells/shockwave.png",
+	"arcane_vines": "res://assets/ui/icons/spells/nature_tree.png",
 	# Alias y hechizos complementarios
 	"spell_fireball": "res://assets/ui/icons/spells/spell_fireball.png",
 	"spell_ice_projectile": "res://assets/ui/icons/spells/spell_ice_projectile.png",

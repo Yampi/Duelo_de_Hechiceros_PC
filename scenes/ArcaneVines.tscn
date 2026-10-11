@@ -1,0 +1,66 @@
+[gd_scene load_steps=8 format=3 uid="uid://arcane_vines_scene_01"]
+
+[ext_resource type="Script" path="res://scripts/arcane_vines.gd" id="1_vines_script"]
+[ext_resource type="Texture2D" path="res://assets/vfx/textures/glow_soft.png" id="2_leaf_tex"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_bark"]
+albedo_color = Color(0.18, 0.38, 0.16, 1)
+roughness = 0.85
+rim_enabled = true
+rim = 0.4
+rim_tint = 0.5
+
+[sub_resource type="TorusMesh" id="TorusMesh_root"]
+material = SubResource("StandardMaterial3D_bark")
+inner_radius = 1.2
+outer_radius = 2.8
+rings = 16
+ring_segments = 12
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_leaf"]
+transparency = 1
+blend_mode = 1
+shading_mode = 0
+albedo_color = Color(0.35, 1.0, 0.45, 0.9)
+albedo_texture = ExtResource("2_leaf_tex")
+billboard_mode = 3
+billboard_keep_scale = true
+
+[sub_resource type="QuadMesh" id="QuadMesh_leaf"]
+material = SubResource("StandardMaterial3D_leaf")
+size = Vector2(0.35, 0.35)
+
+[node name="ArcaneVines" type="Node3D"]
+script = ExtResource("1_vines_script")
+
+[node name="VineRoot" type="Node3D" parent="."]
+
+[node name="Root1" type="MeshInstance3D" parent="VineRoot"]
+transform = Transform3D(1, 0, 0, 0, 0.35, 0, 0, 0, 1, 0, 0.12, 0)
+mesh = SubResource("TorusMesh_root")
+
+[node name="Root2" type="MeshInstance3D" parent="VineRoot"]
+transform = Transform3D(0.707107, 0, 0.707107, 0, 0.4, 0, -0.707107, 0, 0.707107, 0, 0.18, 0)
+mesh = SubResource("TorusMesh_root")
+
+[node name="LeafParticles" type="CPUParticles3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 0)
+amount = 24
+lifetime = 1.4
+emission_shape = 6
+emission_ring_axis = Vector3(0, 1, 0)
+emission_ring_height = 0.3
+emission_ring_radius = 2.6
+emission_ring_inner_radius = 0.4
+direction = Vector3(0, 1, 0)
+spread = 35.0
+gravity = Vector3(0, 0.5, 0)
+initial_velocity_min = 0.8
+initial_velocity_max = 2.0
+mesh = SubResource("QuadMesh_leaf")
+
+[node name="OmniLight3D" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+light_color = Color(0.3, 0.95, 0.4, 1)
+light_energy = 2.2
+omni_range = 5.0

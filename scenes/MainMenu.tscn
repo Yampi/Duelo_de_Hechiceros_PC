@@ -6,6 +6,7 @@
 [ext_resource type="FontFile" path="res://assets/ui/fonts/Cinzel.ttf" id="4_cinzel"]
 [ext_resource type="Texture2D" path="res://assets/ui/frames/divider-000.png" id="5_divider"]
 [ext_resource type="PackedScene" uid="uid://settings_modal_scene_01" path="res://scenes/ui/SettingsModal.tscn" id="6_settings"]
+[ext_resource type="PackedScene" path="res://scenes/ui/GrimoireModal.tscn" id="7_grim"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_menu"]
 sky_top_color = Color(0.12, 0.18, 0.32, 1)
@@ -198,6 +199,11 @@ custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 text = "⚔ JUGAR"
 
+[node name="BtnGrimoire" type="Button" parent="ContentContainer/MainNav"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+text = "📖 GRIMORIO"
+
 [node name="BtnSettings" type="Button" parent="ContentContainer/MainNav"]
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
@@ -304,6 +310,10 @@ size_flags_horizontal = 4
 text = "✕ CERRAR"
 
 [node name="SettingsModal" parent="." instance=ExtResource("6_settings")]
+visible = false
+layout_mode = 1
+
+[node name="GrimoireModal" parent="." instance=ExtResource("7_grim")]
 visible = false
 layout_mode = 1
 

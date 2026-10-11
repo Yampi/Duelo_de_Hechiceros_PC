@@ -18,6 +18,7 @@
 [ext_resource type="Shader" path="res://scripts/ui/vignette.gdshader" id="24_shader_vig"]
 [ext_resource type="Shader" path="res://scripts/ui/screen_effects.gdshader" id="25_shader_fx"]
 [ext_resource type="PackedScene" uid="uid://pause_menu_scene_01" path="res://scenes/ui/PauseMenu.tscn" id="26_pause"]
+[ext_resource type="PackedScene" path="res://scenes/ui/GrimoireModal.tscn" id="27_grim"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_vig"]
 shader = ExtResource("24_shader_vig")
@@ -388,6 +389,14 @@ text = "[I] Inventario"
 icon = ExtResource("22_book")
 expand_icon = true
 
+[node name="BtnGrimoireToggle" type="Button" parent="BottomHUD/RightCluster/NavRow"]
+custom_minimum_size = Vector2(92, 24)
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "[G] Grimorio"
+icon = ExtResource("22_book")
+expand_icon = true
+
 [node name="BtnMapToggle" type="Button" parent="BottomHUD/RightCluster/NavRow"]
 custom_minimum_size = Vector2(82, 24)
 layout_mode = 2
@@ -632,6 +641,15 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="WorldMapModal" parent="." instance=ExtResource("19_map_modal")]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="GrimoireModal" parent="." instance=ExtResource("27_grim")]
 visible = false
 layout_mode = 3
 anchors_preset = 15

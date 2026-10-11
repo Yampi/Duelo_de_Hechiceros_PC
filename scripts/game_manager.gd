@@ -75,75 +75,164 @@ func record_bestiary_entry(monster_name: String, element: String, is_weakness: b
 func get_bestiary_entry(monster_name: String) -> Dictionary:
 	return bestiary_discovered.get(monster_name, {"weaknesses": [], "resistances": []})
 
-# 9 Spell definitions (Hotkeys 1 to 9)
-var spells: Dictionary = {
-	1: {
+# Catálogo completo de los 11 hechizos arcanos
+var spell_catalog: Dictionary = {
+	"magic_bolt": {
 		"id": "magic_bolt",
 		"name": "Centella Arcana",
-		"cost": 5.0,
+		"cost": 8.0,
+		"cooldown": 0.6,
+		"windup": 0.15,
 		"icon": "magic_bolt",
 		"desc": "Proyectil rápido de energía pura"
 	},
-	2: {
+	"fireball": {
 		"id": "fireball",
 		"name": "Bola de Fuego",
 		"cost": 20.0,
+		"cooldown": 2.0,
+		"windup": 0.55,
 		"icon": "fireball",
-		"desc": "Explosión ígnea en área con empuje"
+		"desc": "Explosión ígnea en área con empuje y quemadura DoT"
 	},
-	3: {
+	"summon_goblin": {
 		"id": "summon_goblin",
 		"name": "Invocar Duende",
 		"cost": 30.0,
+		"cooldown": 8.0,
+		"windup": 0.75,
 		"icon": "summon_goblin",
 		"desc": "Invoca un duende aliado que combate contigo"
 	},
-	4: {
+	"shockwave": {
 		"id": "shockwave",
 		"name": "Onda Expansiva",
-		"cost": 25.0,
+		"cost": 18.0,
+		"cooldown": 3.0,
+		"windup": 0.50,
 		"icon": "shockwave",
-		"desc": "Onda sísmica que repele a los enemigos"
+		"desc": "Onda sísmica que repele y aturde 1.0s a enemigos"
 	},
-	5: {
+	"heal": {
 		"id": "heal",
 		"name": "Fuente de Vida",
-		"cost": 35.0,
+		"cost": 25.0,
+		"cooldown": 5.0,
+		"windup": 0.85,
 		"icon": "heal",
 		"desc": "Restaura 40 puntos de Salud al instante"
 	},
-	6: {
+	"teleport": {
 		"id": "teleport",
 		"name": "Teletransporte",
 		"cost": 15.0,
+		"cooldown": 3.0,
+		"windup": 0.20,
 		"icon": "teleport",
 		"desc": "Parpadeo dimensional instantáneo [Espacio / 6]"
 	},
-	7: {
+	"ice_projectile": {
 		"id": "ice_projectile",
 		"name": "Proyectil de Hielo",
 		"cost": 12.0,
+		"cooldown": 1.2,
+		"windup": 0.25,
 		"icon": "ice_projectile",
-		"desc": "Estalactita afilada de escarcha [T]"
+		"desc": "Estalactita de escarcha. 3 impactos congelan 2.0s"
 	},
-	8: {
+	"lightning": {
 		"id": "lightning",
 		"name": "Rayo Arcano",
-		"cost": 18.0,
+		"cost": 24.0,
+		"cooldown": 2.8,
+		"windup": 0.30,
 		"icon": "lightning",
-		"desc": "Descarga eléctrica instantánea en arco [R]"
+		"desc": "Descarga instantánea que aturde y encadena 2 objetivos"
 	},
-	9: {
+	"arcane_shield": {
 		"id": "arcane_shield",
 		"name": "Escudo Mágico",
 		"cost": 20.0,
+		"cooldown": 6.0,
+		"windup": 0.35,
 		"icon": "arcane_shield",
-		"desc": "Barrera arcana que absorbe daño [C]"
+		"desc": "Barrera arcana que absorbe daño [C / 9]"
+	},
+	"earth_fissure": {
+		"id": "earth_fissure",
+		"name": "Fisura de Tierra",
+		"cost": 22.0,
+		"cooldown": 2.5,
+		"windup": 0.35,
+		"icon": "earth_fissure",
+		"desc": "Pantano de fango de 4m. Hunde y ralentiza 70% por 4s"
+	},
+	"arcane_vines": {
+		"id": "arcane_vines",
+		"name": "Enredaderas Arcanas",
+		"cost": 25.0,
+		"cooldown": 3.5,
+		"windup": 0.40,
+		"icon": "arcane_vines",
+		"desc": "Zarzas mágicas de 3m. Inmoviliza enemigos por 3.0s"
 	}
 }
 
+# 9 ranuras activas equipadas (Grimorio)
+var equipped_spell_ids: Array[String] = [
+	"magic_bolt",
+	"fireball",
+	"summon_goblin",
+	"shockwave",
+	"heal",
+	"teleport",
+	"ice_projectile",
+	"lightning",
+	"arcane_shield"
+]
+
+var spells: Dictionary = {}
+
+signal grimorio_updated
+
+func equip_spell(slot_idx: int, spell_id: String) -> void:
+	if slot_idx >= 1 and slot_idx <= 9 and spell_catalog.has(spell_id):
+		equipped_spell_ids[slot_idx - 1] = spell_id
+		_rebuild_spells_dictionary()
+		save_grimorio()
+		grimorio_updated.emit()
+
+func _rebuild_spells_dictionary() -> void:
+	spells.clear()
+	for i in range(equipped_spell_ids.size()):
+		var slot = i + 1
+		var s_id = equipped_spell_ids[i]
+		if spell_catalog.has(s_id):
+			spells[slot] = spell_catalog[s_id]
+
+func save_grimorio() -> void:
+	var cfg = ConfigFile.new()
+	cfg.set_value("grimorio", "equipped_spells", equipped_spell_ids)
+	cfg.save("user://grimorio.cfg")
+
+func load_grimorio() -> void:
+	var cfg = ConfigFile.new()
+	var err = cfg.load("user://grimorio.cfg")
+	if err == OK:
+		var loaded = cfg.get_value("grimorio", "equipped_spells", [])
+		if loaded is Array and loaded.size() == 9:
+			var valid = true
+			for s in loaded:
+				if not spell_catalog.has(s):
+					valid = false
+					break
+			if valid:
+				equipped_spell_ids = loaded
+	_rebuild_spells_dictionary()
+
 func _ready() -> void:
 	ItemDB.init_db()
+	load_grimorio()
 	if not inventory:
 		inventory = InventoryManager.new()
 		inventory.inventory_updated.connect(_on_inventory_updated)

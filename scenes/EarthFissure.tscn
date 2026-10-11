@@ -1,0 +1,75 @@
+[gd_scene load_steps=8 format=3 uid="uid://earth_fissure_scene_01"]
+
+[ext_resource type="Script" path="res://scripts/earth_fissure.gd" id="1_fissure_script"]
+[ext_resource type="Texture2D" path="res://assets/vfx/textures/dust_puff.png" id="2_dust_tex"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_mud"]
+transparency = 1
+albedo_color = Color(0.22, 0.15, 0.1, 0.9)
+roughness = 0.9
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_mud"]
+material = SubResource("StandardMaterial3D_mud")
+top_radius = 4.0
+bottom_radius = 4.0
+height = 0.08
+radial_segments = 32
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rune"]
+transparency = 1
+blend_mode = 1
+shading_mode = 0
+albedo_color = Color(0.85, 0.55, 0.2, 0.8)
+
+[sub_resource type="TorusMesh" id="TorusMesh_border"]
+material = SubResource("StandardMaterial3D_rune")
+inner_radius = 3.8
+outer_radius = 4.05
+rings = 32
+ring_segments = 24
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_dust"]
+transparency = 1
+blend_mode = 1
+shading_mode = 0
+albedo_color = Color(0.7, 0.55, 0.35, 0.85)
+albedo_texture = ExtResource("2_dust_tex")
+billboard_mode = 3
+billboard_keep_scale = true
+
+[sub_resource type="QuadMesh" id="QuadMesh_dust"]
+material = SubResource("StandardMaterial3D_dust")
+size = Vector2(0.45, 0.45)
+
+[node name="EarthFissure" type="Node3D"]
+script = ExtResource("1_fissure_script")
+
+[node name="MudDisk" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0)
+mesh = SubResource("CylinderMesh_mud")
+
+[node name="RuneBorder" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.06, 0)
+mesh = SubResource("TorusMesh_border")
+
+[node name="DustParticles" type="CPUParticles3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 0)
+amount = 28
+lifetime = 1.2
+emission_shape = 6
+emission_ring_axis = Vector3(0, 1, 0)
+emission_ring_height = 0.2
+emission_ring_radius = 3.6
+emission_ring_inner_radius = 0.5
+direction = Vector3(0, 1, 0)
+spread = 25.0
+gravity = Vector3(0, -1.2, 0)
+initial_velocity_min = 1.5
+initial_velocity_max = 3.5
+mesh = SubResource("QuadMesh_dust")
+
+[node name="OmniLight3D" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+light_color = Color(0.85, 0.6, 0.25, 1)
+light_energy = 2.0
+omni_range = 6.0

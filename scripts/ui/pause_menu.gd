@@ -5,10 +5,12 @@ signal resumed
 signal menu_requested
 
 @onready var btn_resume: Button = find_child("BtnResume", true, false)
+@onready var btn_grimoire: Button = find_child("BtnGrimoire", true, false)
 @onready var btn_settings: Button = find_child("BtnSettings", true, false)
 @onready var btn_menu: Button = find_child("BtnMenu", true, false)
 @onready var panel: PanelContainer = find_child("Panel", true, false)
 @onready var settings_modal: Control = find_child("SettingsModal", true, false)
+@onready var grimoire_modal: Control = find_child("GrimoireModal", true, false)
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -16,6 +18,8 @@ func _ready() -> void:
 	
 	if btn_resume:
 		btn_resume.pressed.connect(resume_game)
+	if btn_grimoire:
+		btn_grimoire.pressed.connect(_on_grimoire_pressed)
 	if btn_settings:
 		btn_settings.pressed.connect(_on_settings_pressed)
 	if btn_menu:
@@ -25,6 +29,15 @@ func _ready() -> void:
 			if visible and btn_settings:
 				btn_settings.grab_focus()
 		)
+	if grimoire_modal and grimoire_modal.has_signal("grimoire_closed"):
+		grimoire_modal.grimoire_closed.connect(func():
+			if visible and btn_grimoire:
+				btn_grimoire.grab_focus()
+		)
+
+func _on_grimoire_pressed() -> void:
+	if grimoire_modal and grimoire_modal.has_method("open_grimoire"):
+		grimoire_modal.open_grimoire()
 
 func toggle_pause() -> void:
 	if visible:

@@ -5,6 +5,7 @@
 [ext_resource type="FontFile" path="res://assets/ui/fonts/Cinzel.ttf" id="3_cinzel"]
 [ext_resource type="Texture2D" path="res://assets/ui/frames/divider-000.png" id="4_divider"]
 [ext_resource type="PackedScene" uid="uid://settings_modal_scene_01" path="res://scenes/ui/SettingsModal.tscn" id="5_settings"]
+[ext_resource type="PackedScene" path="res://scenes/ui/GrimoireModal.tscn" id="6_grim"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
 bg_color = Color(0.04, 0.06, 0.09, 0.94)
@@ -84,6 +85,12 @@ layout_mode = 2
 theme = ExtResource("2_theme")
 text = "▶ REANUDAR"
 
+[node name="BtnGrimoire" type="Button" parent="Center/Panel/VBox"]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+theme = ExtResource("2_theme")
+text = "📖 GRIMORIO"
+
 [node name="BtnSettings" type="Button" parent="Center/Panel/VBox"]
 custom_minimum_size = Vector2(0, 42)
 layout_mode = 2
@@ -97,5 +104,9 @@ theme = ExtResource("2_theme")
 text = "🏛 MENÚ PRINCIPAL"
 
 [node name="SettingsModal" parent="." instance=ExtResource("5_settings")]
+visible = false
+layout_mode = 1
+
+[node name="GrimoireModal" parent="." instance=ExtResource("6_grim")]
 visible = false
 layout_mode = 1

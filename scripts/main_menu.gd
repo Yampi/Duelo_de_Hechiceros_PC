@@ -9,6 +9,7 @@ const UIConstants = preload("res://scripts/ui/ui_constants.gd")
 @onready var modes_panel: PanelContainer = find_child("ModesPanel", true, false)
 
 @onready var btn_play: Button = find_child("BtnPlay", true, false)
+@onready var btn_grimoire: Button = find_child("BtnGrimoire", true, false)
 @onready var btn_settings: Button = find_child("BtnSettings", true, false)
 @onready var btn_credits: Button = find_child("BtnCredits", true, false)
 @onready var btn_quit: Button = find_child("BtnQuit", true, false)
@@ -19,6 +20,7 @@ const UIConstants = preload("res://scripts/ui/ui_constants.gd")
 @onready var btn_back_modes: Button = find_child("BtnBackModes", true, false)
 
 @onready var settings_modal: Control = find_child("SettingsModal", true, false)
+@onready var grimoire_modal: Control = find_child("GrimoireModal", true, false)
 @onready var credits_modal: Control = find_child("CreditsModal", true, false)
 @onready var btn_close_credits: Button = find_child("BtnCloseCredits", true, false)
 
@@ -51,6 +53,8 @@ func _setup_3d_wizard() -> void:
 func _connect_buttons() -> void:
 	if btn_play:
 		btn_play.pressed.connect(_show_mode_selection)
+	if btn_grimoire:
+		btn_grimoire.pressed.connect(_on_grimoire_pressed)
 	if btn_settings:
 		btn_settings.pressed.connect(_on_settings_pressed)
 	if btn_credits:
@@ -77,6 +81,15 @@ func _connect_buttons() -> void:
 		settings_modal.settings_closed.connect(func():
 			if btn_settings: btn_settings.grab_focus()
 		)
+	
+	if grimoire_modal and grimoire_modal.has_signal("grimoire_closed"):
+		grimoire_modal.grimoire_closed.connect(func():
+			if btn_grimoire: btn_grimoire.grab_focus()
+		)
+
+func _on_grimoire_pressed() -> void:
+	if grimoire_modal and grimoire_modal.has_method("open_grimoire"):
+		grimoire_modal.open_grimoire()
 
 func _animate_staggered_entrance() -> void:
 	if modes_panel:

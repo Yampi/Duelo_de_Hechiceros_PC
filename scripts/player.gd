@@ -62,6 +62,13 @@ var ice_projectile_scene: PackedScene = preload("res://scenes/IceProjectile.tscn
 var lightning_bolt_scene: PackedScene = preload("res://scenes/LightningBolt.tscn")
 var arcane_shield_scene: PackedScene = preload("res://scenes/ArcaneShield.tscn")
 var teleport_effect_scene: PackedScene = preload("res://scenes/TeleportEffect.tscn")
+var earth_fissure_scene: PackedScene = preload("res://scenes/EarthFissure.tscn")
+var arcane_vines_scene: PackedScene = preload("res://scenes/ArcaneVines.tscn")
+
+var global_cooldown_timer: float = 0.0
+var slot_cooldowns: Dictionary = {}
+var slot_max_cooldowns: Dictionary = {}
+var mana_regen_pause_timer: float = 0.0
 
 var active_shield: Node3D = null
 
@@ -263,17 +270,50 @@ func select_spell_slot(slot: int) -> void:
 		selected_spell = slot
 		spell_changed.emit(selected_spell)
 
+func _get_spell_element_color(spell_key: String) -> Color:
+	match spell_key:
+		"magic_bolt": return Color(0.2, 0.85, 1.0)
+		"fireball": return Color(1.0, 0.45, 0.1)
+		"summon_goblin": return Color(0.85, 0.3, 1.0)
+		"shockwave": return Color(1.0, 0.85, 0.2)
+		"heal": return Color(0.25, 1.0, 0.45)
+		"teleport": return Color(0.85, 0.35, 1.0)
+		"ice_projectile": return Color(0.4, 0.85, 1.0)
+		"lightning": return Color(0.9, 0.95, 1.0)
+		"arcane_shield": return Color(0.3, 0.75, 1.0)
+		"earth_fissure": return Color(0.72, 0.45, 0.2)
+		"arcane_vines": return Color(0.2, 0.85, 0.3)
+		_: return Color(0.4, 0.8, 1.0)
+
+func _find_slot_for_spell(spell_id_key: String) -> int:
+	for slot in GameManager.spells:
+		if GameManager.spells[slot].get("id", "") == spell_id_key:
+			return slot
+	return -1
+
 func start_spell_channeling() -> void:
 	if is_channeling:
 		return
 	
-	# Validar que Fuente de Vida (5) no se lance ni gaste maná si la vida está completa
-	if selected_spell == 5 and GameManager.player_health >= GameManager.player_max_health:
+	if global_cooldown_timer > 0.0 or slot_cooldowns.get(selected_spell, 0.0) > 0.0:
+		return
+	
+	var spell_info = GameManager.spells.get(selected_spell, {})
+	var spell_key = spell_info.get("id", "")
+	if spell_key.is_empty():
+		var id_map = {
+			1: "magic_bolt", 2: "fireball", 3: "summon_goblin", 4: "shockwave",
+			5: "heal", 6: "teleport", 7: "ice_projectile", 8: "lightning", 9: "arcane_shield"
+		}
+		spell_key = id_map.get(selected_spell, "magic_bolt")
+	
+	# Validar que Fuente de Vida no se lance ni gaste maná si la vida está completa
+	if (spell_key == "heal" or selected_spell == 5) and GameManager.player_health >= GameManager.player_max_health:
 		GameManager.spawn_damage_number(global_position + Vector3(0, 1.8, 0), "💚 Vida completa", Color(0.4, 1.0, 0.4), 1.0)
 		_pulse_staff(Color(0.2, 1.0, 0.5), 0.2)
 		return
 	
-	var cost = GameManager.spells[selected_spell]["cost"]
+	var cost = spell_info.get("cost", 8.0)
 	if GameManager.player_mana < cost:
 		_pulse_staff(Color(1, 0.2, 0.2)) # Insufficient mana pulse
 		cast_failed_no_mana.emit(selected_spell)
@@ -281,7 +321,7 @@ func start_spell_channeling() -> void:
 	
 	pending_spell = selected_spell
 	var haste_factor = 0.5 if haste_timer > 0.0 else 1.0
-	total_channel_time = spell_windups.get(pending_spell, 0.3) * haste_factor
+	total_channel_time = spell_info.get("windup", spell_windups.get(pending_spell, 0.3)) * haste_factor
 	channel_timer = total_channel_time
 	is_channeling = true
 	CursorManager.set_cursor(CursorManager.CursorType.TARGET)
@@ -289,17 +329,7 @@ func start_spell_channeling() -> void:
 	play_anim("Spell_Simple_Enter", 0.08)
 	
 	# Visual cue: staff gem glows element color during windup
-	var elem_color = Color(0.2, 0.8, 1.0)
-	match pending_spell:
-		1: elem_color = Color(0.2, 0.8, 1.0)
-		2: elem_color = Color(1.0, 0.45, 0.1)
-		3: elem_color = Color(0.8, 0.3, 1.0)
-		4: elem_color = Color(1.0, 0.85, 0.2)
-		5: elem_color = Color(0.2, 1.0, 0.5)
-		6: elem_color = Color(0.85, 0.35, 1.0)
-		7: elem_color = Color(0.4, 0.85, 1.0)
-		8: elem_color = Color(0.9, 0.95, 1.0)
-		9: elem_color = Color(0.3, 0.75, 1.0)
+	var elem_color = _get_spell_element_color(spell_key)
 	_pulse_staff(elem_color, total_channel_time)
 
 func _physics_process(delta: float) -> void:
@@ -309,11 +339,28 @@ func _physics_process(delta: float) -> void:
 	hurt_cooldown = max(0.0, hurt_cooldown - delta)
 	haste_timer = max(0.0, haste_timer - delta)
 	
+	# Cooldown timers
+	if global_cooldown_timer > 0.0:
+		global_cooldown_timer = max(0.0, global_cooldown_timer - delta)
+	
+	var finished_slots: Array = []
+	for slot in slot_cooldowns:
+		slot_cooldowns[slot] -= delta
+		if slot_cooldowns[slot] <= 0.0:
+			finished_slots.append(slot)
+		else:
+			var max_cd = slot_max_cooldowns.get(slot, 1.0)
+			var prog = clamp(slot_cooldowns[slot] / max(0.01, max_cd), 0.0, 1.0)
+			cast_progress_updated.emit(slot, prog)
+	
+	for slot in finished_slots:
+		slot_cooldowns.erase(slot)
+		cast_progress_updated.emit(slot, 0.0)
+	
 	# Channeling timer & spell execution
 	if is_channeling:
 		channel_timer -= delta
 		var progress = clamp(1.0 - (channel_timer / max(0.01, total_channel_time)), 0.0, 1.0)
-		cast_progress_updated.emit(pending_spell, progress)
 		play_anim("Spell_Simple_Idle", 0.12)
 		
 		if aim_marker and aim_marker.has_node("AimRing"):
@@ -323,15 +370,17 @@ func _physics_process(delta: float) -> void:
 		
 		if channel_timer <= 0.0:
 			is_channeling = false
-			cast_progress_updated.emit(pending_spell, 0.0)
 			execute_spell(pending_spell)
 			if aim_marker and aim_marker.has_node("AimRing"):
 				var ring = aim_marker.get_node("AimRing") as Node3D
 				ring.scale = Vector3.ONE * 0.6
 				ring.rotation.y = 0.0
 	
-	# Mana natural regeneration + Place of Power bonus
-	GameManager.player_mana = min(GameManager.player_max_mana, GameManager.player_mana + (GameManager.mana_regen_rate * delta))
+	# Mana natural regeneration with 1.5s pause after casting
+	if mana_regen_pause_timer > 0.0:
+		mana_regen_pause_timer = max(0.0, mana_regen_pause_timer - delta)
+	else:
+		GameManager.player_mana = min(GameManager.player_max_mana, GameManager.player_mana + (GameManager.mana_regen_rate * delta))
 	mana_updated.emit(GameManager.player_mana, GameManager.player_max_mana)
 	health_updated.emit(GameManager.player_health, GameManager.player_max_health)
 	
@@ -480,33 +529,38 @@ func update_aim_point() -> void:
 		CursorManager.set_cursor(CursorManager.CursorType.DEFAULT)
 
 func execute_spell(spell_id: int) -> void:
-	var spell_info = GameManager.spells[spell_id]
-	var cost = spell_info["cost"]
+	var spell_info = GameManager.spells.get(spell_id, {})
+	var spell_key = spell_info.get("id", "")
+	if spell_key.is_empty():
+		var id_map = {
+			1: "magic_bolt", 2: "fireball", 3: "summon_goblin", 4: "shockwave",
+			5: "heal", 6: "teleport", 7: "ice_projectile", 8: "lightning", 9: "arcane_shield"
+		}
+		spell_key = id_map.get(spell_id, "magic_bolt")
 	
 	# Fuente de Vida: no gastar maná ni lanzar si la vida está completa
-	if spell_id == 5 and GameManager.player_health >= GameManager.player_max_health:
+	if (spell_key == "heal" or spell_id == 5) and GameManager.player_health >= GameManager.player_max_health:
 		GameManager.spawn_damage_number(global_position + Vector3(0, 1.8, 0), "💚 Vida completa", Color(0.4, 1.0, 0.4), 1.0)
 		return
 	
+	var cost = spell_info.get("cost", 8.0)
 	if GameManager.player_mana < cost:
 		_pulse_staff(Color(1, 0.2, 0.2)) # Insufficient mana pulse
 		cast_failed_no_mana.emit(spell_id)
 		return
 	
 	GameManager.player_mana -= cost
+	mana_regen_pause_timer = 1.5
+	
+	var cd = spell_info.get("cooldown", 0.6)
+	slot_cooldowns[spell_id] = cd
+	slot_max_cooldowns[spell_id] = cd
+	global_cooldown_timer = 0.3
+	cast_progress_updated.emit(spell_id, 1.0)
+	
 	_pulse_staff(Color(0.2, 0.9, 1.0), 0.2)
 	
-	var elem_color = Color(0.2, 0.8, 1.0)
-	match spell_id:
-		1: elem_color = Color(0.2, 0.85, 1.0)
-		2: elem_color = Color(1.0, 0.45, 0.1)
-		3: elem_color = Color(0.85, 0.3, 1.0)
-		4: elem_color = Color(1.0, 0.85, 0.2)
-		5: elem_color = Color(0.25, 1.0, 0.45)
-		6: elem_color = Color(0.85, 0.35, 1.0)
-		7: elem_color = Color(0.4, 0.85, 1.0)
-		8: elem_color = Color(0.9, 0.95, 1.0)
-		9: elem_color = Color(0.3, 0.75, 1.0)
+	var elem_color = _get_spell_element_color(spell_key)
 	element_flash_requested.emit(elem_color)
 	
 	play_anim("Spell_Simple_Shoot", 0.05)
@@ -514,8 +568,8 @@ func execute_spell(spell_id: int) -> void:
 	var spawn_pos = staff_gem.global_position if staff_gem else (global_position + Vector3(0, 1.4, 0))
 	spawn_pos.y = max(spawn_pos.y, global_position.y + 0.8)
 	
-	match spell_id:
-		1: # Centella Arcana (Magic Bolt)
+	match spell_key:
+		"magic_bolt":
 			var bolt = magic_bolt_scene.instantiate()
 			get_parent().add_child(bolt)
 			var dir = (aim_point - spawn_pos).normalized()
@@ -528,12 +582,12 @@ func execute_spell(spell_id: int) -> void:
 				_pulse_staff(Color(0.2, 0.95, 1.0), 0.4)
 			bolt.init_bolt(spawn_pos, dir)
 			
-		2: # Bola de Fuego (Fireball)
+		"fireball":
 			var fb = fireball_scene.instantiate()
 			get_parent().add_child(fb)
 			fb.init_trajectory(spawn_pos, aim_point)
 			
-		3: # Invocar Duende (Summon Minion)
+		"summon_goblin":
 			var circle = summon_circle_scene.instantiate()
 			get_parent().add_child(circle)
 			circle.global_position = aim_point
@@ -544,36 +598,68 @@ func execute_spell(spell_id: int) -> void:
 			gob.leader = self
 			GameManager.spawn_damage_number(aim_point, "🧙 ¡DUENDE INVOCADO!", Color(0.85, 0.45, 1.0), 1.1)
 			
-		4: # Onda Expansiva (Shockwave)
+		"shockwave":
 			var sw = shockwave_scene.instantiate()
 			get_parent().add_child(sw)
 			sw.global_position = global_position
 			
-		5: # Fuente de Vida (Heal)
+		"heal":
 			GameManager.player_health = min(GameManager.player_max_health, GameManager.player_health + 40.0)
 			GameManager.spawn_damage_number(global_position, "💚 +40 HP", Color(0.2, 1.0, 0.4), 1.25)
 			var heal = heal_scene.instantiate()
 			add_child(heal)
 			
-		6: # Teletransporte (Teleport / Blink)
-			cast_teleport(false)
+		"teleport":
+			cast_teleport(false, spell_id)
 			
-		7: # Proyectil de Hielo (Ice Projectile)
-			cast_ice_projectile(false)
+		"ice_projectile":
+			cast_ice_projectile(false, spell_id)
 			
-		8: # Rayo Arcano (Lightning Bolt)
-			cast_lightning_bolt(false)
+		"lightning":
+			cast_lightning_bolt(false, spell_id)
 			
-		9: # Escudo Mágico (Arcane Shield)
-			cast_arcane_shield(false)
+		"arcane_shield":
+			cast_arcane_shield(false, spell_id)
 
-func cast_teleport(deduct_mana: bool = true) -> void:
-	var cost = GameManager.spells[6]["cost"]
+		"earth_fissure":
+			if earth_fissure_scene:
+				var ef = earth_fissure_scene.instantiate()
+				get_parent().add_child(ef)
+				ef.global_position = aim_point
+				if ef.has_method("_apply_fissure_effects"):
+					ef._apply_fissure_effects()
+				_pulse_staff(Color(0.72, 0.45, 0.2), 0.3)
+				GameManager.spawn_damage_number(aim_point, "🌍 FISURA DE TIERRA", Color(0.85, 0.65, 0.3), 1.1)
+
+		"arcane_vines":
+			if arcane_vines_scene:
+				var av = arcane_vines_scene.instantiate()
+				get_parent().add_child(av)
+				av.global_position = aim_point
+				if av.has_method("_trap_enemies"):
+					av._trap_enemies()
+				_pulse_staff(Color(0.2, 0.85, 0.3), 0.3)
+				GameManager.spawn_damage_number(aim_point, "🌿 ENREDADERAS ARCANAS", Color(0.3, 0.9, 0.4), 1.1)
+
+func cast_teleport(deduct_mana: bool = true, from_slot: int = -1) -> void:
+	var slot = from_slot if from_slot != -1 else _find_slot_for_spell("teleport")
+	var cost = GameManager.spell_catalog["teleport"]["cost"]
 	if deduct_mana:
+		if global_cooldown_timer > 0.0:
+			return
+		if slot != -1 and slot_cooldowns.get(slot, 0.0) > 0.0:
+			return
 		if GameManager.player_mana < cost:
 			_pulse_staff(Color(1, 0.2, 0.2))
 			return
 		GameManager.player_mana -= cost
+		mana_regen_pause_timer = 1.5
+		global_cooldown_timer = 0.3
+		if slot != -1:
+			var cd = GameManager.spell_catalog["teleport"]["cooldown"]
+			slot_cooldowns[slot] = cd
+			slot_max_cooldowns[slot] = cd
+			cast_progress_updated.emit(slot, 1.0)
 		mana_updated.emit(GameManager.player_mana, GameManager.player_max_mana)
 	
 	# Origin departure effect
@@ -613,13 +699,25 @@ func cast_teleport(deduct_mana: bool = true) -> void:
 		mtween.tween_property(m, "scale", orig_s, 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	GameManager.spawn_damage_number(global_position, "✨ PARPADEO", Color(0.85, 0.45, 1.0), 1.0)
 
-func cast_ice_projectile(deduct_mana: bool = true) -> void:
-	var cost = GameManager.spells[7]["cost"]
+func cast_ice_projectile(deduct_mana: bool = true, from_slot: int = -1) -> void:
+	var slot = from_slot if from_slot != -1 else _find_slot_for_spell("ice_projectile")
+	var cost = GameManager.spell_catalog["ice_projectile"]["cost"]
 	if deduct_mana:
+		if global_cooldown_timer > 0.0:
+			return
+		if slot != -1 and slot_cooldowns.get(slot, 0.0) > 0.0:
+			return
 		if GameManager.player_mana < cost:
 			_pulse_staff(Color(1, 0.2, 0.2))
 			return
 		GameManager.player_mana -= cost
+		mana_regen_pause_timer = 1.5
+		global_cooldown_timer = 0.3
+		if slot != -1:
+			var cd = GameManager.spell_catalog["ice_projectile"]["cooldown"]
+			slot_cooldowns[slot] = cd
+			slot_max_cooldowns[slot] = cd
+			cast_progress_updated.emit(slot, 1.0)
 		mana_updated.emit(GameManager.player_mana, GameManager.player_max_mana)
 	
 	play_anim("Spell_Simple_Shoot", 0.05)
@@ -633,13 +731,25 @@ func cast_ice_projectile(deduct_mana: bool = true) -> void:
 	
 	_pulse_staff(Color(0.4, 0.85, 1.0), 0.2)
 
-func cast_lightning_bolt(deduct_mana: bool = true) -> void:
-	var cost = GameManager.spells[8]["cost"]
+func cast_lightning_bolt(deduct_mana: bool = true, from_slot: int = -1) -> void:
+	var slot = from_slot if from_slot != -1 else _find_slot_for_spell("lightning")
+	var cost = GameManager.spell_catalog["lightning"]["cost"]
 	if deduct_mana:
+		if global_cooldown_timer > 0.0:
+			return
+		if slot != -1 and slot_cooldowns.get(slot, 0.0) > 0.0:
+			return
 		if GameManager.player_mana < cost:
 			_pulse_staff(Color(1, 0.2, 0.2))
 			return
 		GameManager.player_mana -= cost
+		mana_regen_pause_timer = 1.5
+		global_cooldown_timer = 0.3
+		if slot != -1:
+			var cd = GameManager.spell_catalog["lightning"]["cooldown"]
+			slot_cooldowns[slot] = cd
+			slot_max_cooldowns[slot] = cd
+			cast_progress_updated.emit(slot, 1.0)
 		mana_updated.emit(GameManager.player_mana, GameManager.player_max_mana)
 	
 	play_anim("Spell_Simple_Shoot", 0.05)
@@ -654,13 +764,25 @@ func cast_lightning_bolt(deduct_mana: bool = true) -> void:
 	_pulse_staff(Color(0.85, 0.95, 1.0), 0.2)
 	GameManager.shake_camera(0.25)
 
-func cast_arcane_shield(deduct_mana: bool = true) -> void:
-	var cost = GameManager.spells[9]["cost"]
+func cast_arcane_shield(deduct_mana: bool = true, from_slot: int = -1) -> void:
+	var slot = from_slot if from_slot != -1 else _find_slot_for_spell("arcane_shield")
+	var cost = GameManager.spell_catalog["arcane_shield"]["cost"]
 	if deduct_mana:
+		if global_cooldown_timer > 0.0:
+			return
+		if slot != -1 and slot_cooldowns.get(slot, 0.0) > 0.0:
+			return
 		if GameManager.player_mana < cost:
 			_pulse_staff(Color(1, 0.2, 0.2))
 			return
 		GameManager.player_mana -= cost
+		mana_regen_pause_timer = 1.5
+		global_cooldown_timer = 0.3
+		if slot != -1:
+			var cd = GameManager.spell_catalog["arcane_shield"]["cooldown"]
+			slot_cooldowns[slot] = cd
+			slot_max_cooldowns[slot] = cd
+			cast_progress_updated.emit(slot, 1.0)
 		mana_updated.emit(GameManager.player_mana, GameManager.player_max_mana)
 	
 	if active_shield and is_instance_valid(active_shield):

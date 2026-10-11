@@ -48,9 +48,11 @@ signal spell_button_pressed(slot: int)
 @onready var minimap: Control = $Minimap
 @onready var inventory_ui: Control = $InventoryUI
 @onready var world_map_modal: Control = $WorldMapModal
+@onready var grimoire_modal: Control = $GrimoireModal if has_node("GrimoireModal") else null
 
 @onready var btn_inv_toggle: Button = $BottomHUD/RightCluster/NavRow/BtnInvToggle
 @onready var btn_map_toggle: Button = $BottomHUD/RightCluster/NavRow/BtnMapToggle
+@onready var btn_grimoire_toggle: Button = find_child("BtnGrimoireToggle", true, false)
 
 @onready var game_over_panel: Control = $GameOverPanel
 @onready var victory_panel: Control = $VictoryPanel
@@ -77,6 +79,7 @@ func _ready() -> void:
 	
 	GameManager.reagents_updated.connect(update_reagents_display)
 	GameManager.shrines_updated.connect(update_shrines_display)
+	GameManager.grimorio_updated.connect(refresh_spell_bar)
 	
 	# Quick slots
 	if quick_slot_hp:
@@ -91,6 +94,9 @@ func _ready() -> void:
 	if btn_map_toggle:
 		btn_map_toggle.pressed.connect(toggle_world_map)
 		btn_map_toggle.icon = IconRegistry.get_icon("ui", "map")
+	if btn_grimoire_toggle:
+		btn_grimoire_toggle.pressed.connect(toggle_grimoire)
+		btn_grimoire_toggle.icon = IconRegistry.get_icon("spells", "spell_book")
 	if minimap and minimap.has_signal("open_world_map_requested"):
 		minimap.open_world_map_requested.connect(toggle_world_map)
 	
@@ -222,11 +228,17 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.keycode == KEY_M:
 			toggle_world_map()
 			get_viewport().set_input_as_handled()
+		elif event.keycode == KEY_G:
+			toggle_grimoire()
+			get_viewport().set_input_as_handled()
 		elif event.keycode == KEY_H:
 			toggle_control_hints()
 			get_viewport().set_input_as_handled()
 		elif event.keycode == KEY_ESCAPE:
-			if inventory_ui and inventory_ui.visible:
+			if grimoire_modal and grimoire_modal.visible:
+				toggle_grimoire()
+				get_viewport().set_input_as_handled()
+			elif inventory_ui and inventory_ui.visible:
 				toggle_inventory()
 				get_viewport().set_input_as_handled()
 			elif world_map_modal and world_map_modal.visible:
@@ -259,6 +271,19 @@ func toggle_world_map() -> void:
 		if am and am.has_method("play_ui"):
 			am.play_ui("open" if will_open else "close")
 
+func toggle_grimoire() -> void:
+	if grimoire_modal and grimoire_modal.has_method("toggle_grimoire"):
+		var will_open = not grimoire_modal.visible
+		grimoire_modal.toggle_grimoire()
+		var am = get_node_or_null("/root/AudioManager")
+		if am and am.has_method("play_ui"):
+			am.play_ui("open" if will_open else "close")
+
+func refresh_spell_bar() -> void:
+	for slot_comp in spell_slots:
+		if slot_comp and slot_comp.has_method("_update_ui"):
+			slot_comp._update_ui()
+
 func update_active_spell(slot: int) -> void:
 	active_slot = slot
 	for i in range(spell_slots.size()):
@@ -288,14 +313,13 @@ func update_mana(current: float, max_val: float, regen: float) -> void:
 			slot_comp.update_mana_status(current)
 
 func update_cast_progress(slot: int, progress: float) -> void:
-	for i in range(spell_slots.size()):
-		if spell_slots[i] and spell_slots[i].has_method("set_cooldown"):
-			if (i + 1) == slot:
-				spell_slots[i].set_cooldown(progress)
-				if progress >= 0.95 and spell_slots[i].has_method("flash_cast"):
-					spell_slots[i].flash_cast()
-			else:
-				spell_slots[i].set_cooldown(0.0)
+	var idx = slot - 1
+	if idx >= 0 and idx < spell_slots.size():
+		var s = spell_slots[idx]
+		if s and s.has_method("set_cooldown"):
+			s.set_cooldown(progress)
+			if progress >= 0.95 and s.has_method("flash_cast"):
+				s.flash_cast()
 
 func set_target_enemy(enemy: Node) -> void:
 	if target_indicator and target_indicator.has_method("set_target_node"):
