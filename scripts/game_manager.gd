@@ -59,6 +59,22 @@ var reagents: Dictionary = {
 	"core": 0
 }
 
+# Bestiary repository (discovered monster weaknesses and resistances)
+var bestiary_discovered: Dictionary = {}
+
+func record_bestiary_entry(monster_name: String, element: String, is_weakness: bool) -> void:
+	if not bestiary_discovered.has(monster_name):
+		bestiary_discovered[monster_name] = {
+			"weaknesses": [],
+			"resistances": []
+		}
+	var cat = "weaknesses" if is_weakness else "resistances"
+	if not element in bestiary_discovered[monster_name][cat]:
+		bestiary_discovered[monster_name][cat].append(element)
+
+func get_bestiary_entry(monster_name: String) -> Dictionary:
+	return bestiary_discovered.get(monster_name, {"weaknesses": [], "resistances": []})
+
 # 9 Spell definitions (Hotkeys 1 to 9)
 var spells: Dictionary = {
 	1: {

@@ -238,7 +238,7 @@ anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = -580.0
-offset_top = -80.0
+offset_top = -120.0
 offset_right = -320.0
 offset_bottom = 0.0
 grow_horizontal = 2
@@ -248,6 +248,12 @@ theme_override_constants/separation = 4
 [node name="HealthBar" parent="BottomHUD/LeftCluster" instance=ExtResource("6_stat_bar")]
 custom_minimum_size = Vector2(250, 44)
 layout_mode = 2
+
+[node name="StaminaBar" parent="BottomHUD/LeftCluster" instance=ExtResource("6_stat_bar")]
+custom_minimum_size = Vector2(250, 36)
+layout_mode = 2
+bar_type = 2
+bar_title = "VIGOR"
 
 [node name="StatusBar" type="HBoxContainer" parent="BottomHUD/LeftCluster"]
 custom_minimum_size = Vector2(0, 24)

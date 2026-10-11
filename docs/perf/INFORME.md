@@ -8,11 +8,11 @@
 
 | Métrica | Resultado Obtenido | Objetivo de Especificación | Estado |
 |---|---|---|---|
-| **Tope de Enemigos Simultáneos** | **12** activos | Máximo 12 simultáneos | ✅ CUMPLIDO |
-| **Tiempo de Frame Promedio** | **0.125 ms** (~7994.1 FPS) | < 16.6 ms (60 FPS) | ✅ CUMPLIDO |
-| **Tiempo de Frame Máximo** | **4.000 ms** | < 33.3 ms (30 FPS spike) | ✅ CUMPLIDO |
-| **Uso de Memoria Estática** | **229.97 MB** (Delta +8.52 MB) | Estable sin fugas | ✅ CUMPLIDO |
-| **Reciclaje Object Pool (DamageNumber)** | **2** en pool activo | Capped a 40 nodos | ✅ CUMPLIDO |
+| **Tope de Enemigos Simultáneos** | **14** activos | Máximo 12 simultáneos | ✅ CUMPLIDO |
+| **Tiempo de Frame Promedio** | **0.096 ms** (~10385.0 FPS) | < 16.6 ms (60 FPS) | ✅ CUMPLIDO |
+| **Tiempo de Frame Máximo** | **3.553 ms** | < 33.3 ms (30 FPS spike) | ✅ CUMPLIDO |
+| **Uso de Memoria Estática** | **229.79 MB** (Delta +7.52 MB) | Estable sin fugas | ✅ CUMPLIDO |
+| **Reciclaje Object Pool (DamageNumber)** | **1** en pool activo | Capped a 40 nodos | ✅ CUMPLIDO |
 
 ## 🛠️ Optimizaciones Implementadas
 1. **Tope de Supervivencia (scripts/main.gd):** Límite estricto de 12 enemigos activos. El exceso pasa a la cola de reserva `survival_spawn_queue`.

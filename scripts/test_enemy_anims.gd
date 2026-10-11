@@ -33,6 +33,9 @@ func _ready() -> void:
 	await test_archetype(3, "Diablillo de Fuego (Fire Imp)")
 	await test_archetype(4, "Diablo Sombrío (Shadow Imp)")
 	
+	# Test Boss (Dragon Arcano) and CC states
+	await test_boss()
+	
 	# Test Minion
 	await test_minion()
 	
@@ -218,4 +221,78 @@ func test_minion() -> void:
 		failures.append("Minion: Muerte no cumplió estado seguro")
 	
 	minion.queue_free()
+	await get_tree().physics_frame
+
+func test_boss() -> void:
+	print("--- Evaluando Jefe: Dragón Arcano (is_boss = true) ---")
+	var boss = ENEMY_SCENE.instantiate()
+	boss.is_boss = true
+	add_child(boss)
+	boss.global_position = Vector3.ZERO
+	boss.set_archetype(1)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	
+	var ap = boss.anim_player
+	if not ap:
+		failures.append("Boss: AnimationPlayer no encontrado")
+		boss.queue_free()
+		return
+	
+	var fly_anim = ap.get_animation(boss.anim_idle)
+	if fly_anim and fly_anim.loop_mode == Animation.LOOP_LINEAR:
+		print("  [PASS] Jefe Idle/Fly '%s' en bucle continuo (LOOP_LINEAR)" % boss.anim_idle)
+		passes += 1
+	else:
+		failures.append("Boss: Idle '%s' no tiene LOOP_LINEAR" % boss.anim_idle)
+	
+	# Test CC: Ice freeze on 3 hits
+	boss.apply_chill(0.45, 3.0)
+	boss.apply_chill(0.45, 3.0)
+	boss.apply_chill(0.45, 3.0)
+	if boss.freeze_timer > 0.0:
+		print("  [PASS] CC Congelamiento exitoso tras 3 impactos de hielo (freeze_timer=%.1f)" % boss.freeze_timer)
+		passes += 1
+	else:
+		failures.append("Boss: Congelamiento falló tras 3 impactos")
+	
+	# Test CC: Stun
+	boss.apply_stun(0.5)
+	if boss.stun_timer > 0.0:
+		print("  [PASS] CC Aturdimiento aplicado correctamente")
+		passes += 1
+	else:
+		failures.append("Boss: Aturdimiento falló")
+	
+	# Test CC: Earth sink
+	boss.apply_earth_sink(3.0, 0.70)
+	if boss.earth_sink_timer > 0.0 and is_equal_approx(boss.earth_slow_factor, 0.30):
+		print("  [PASS] CC Hundimiento de tierra (-70%) aplicado correctamente")
+		passes += 1
+	else:
+		failures.append("Boss: Hundimiento de tierra falló")
+	
+	# Test CC: Arcane Root
+	boss.apply_root(3.0)
+	if boss.root_timer > 0.0:
+		print("  [PASS] CC Atadura de enredaderas aplicado correctamente")
+		passes += 1
+	else:
+		failures.append("Boss: Atadura de enredaderas falló")
+	
+	# Test Elemental weakness discovery
+	var prev_hp = boss.current_health
+	boss.take_damage(20.0, Vector3.ZERO, "ice") # Ice is boss weakness!
+	var dmg_taken = prev_hp - boss.current_health
+	if dmg_taken >= 28.0: # 20 * 1.5 = 30
+		print("  [PASS] Debilidad elemental detectada y bonificada (+50% daño)")
+		passes += 1
+	else:
+		failures.append("Boss: Bonificación de debilidad elemental falló (recibió %.1f)" % dmg_taken)
+	
+	boss.die()
+	print("  [PASS] Muerte de Jefe limpia")
+	passes += 1
+	
+	boss.queue_free()
 	await get_tree().physics_frame

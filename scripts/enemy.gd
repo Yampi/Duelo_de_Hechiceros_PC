@@ -83,10 +83,24 @@ var _separation_calc_frame: int = -1
 var _cached_los: bool = true
 var _los_check_timer: float = 0.0
 
-# Tactical CC (Chill / Slow from Ice spells)
+# Tactical CC (Crowd Control) & Elemental System
 var chill_timer: float = 0.0
 var chill_slow_factor: float = 0.55
 var chill_vfx_node: CPUParticles3D = null
+var ice_stacks: int = 0
+var freeze_timer: float = 0.0
+var stun_timer: float = 0.0
+var burn_timer: float = 0.0
+var burn_tick_timer: float = 0.0
+var burn_dps: float = 6.0
+var earth_sink_timer: float = 0.0
+var earth_slow_factor: float = 0.30
+var root_timer: float = 0.0
+var lost_los_duration: float = 4.5
+
+# Elemental Affinities & Resistances
+var elemental_weaknesses: Array[String] = []
+var elemental_resistances: Array[String] = []
 
 var anim_walk: String = "Walk-fast"
 var anim_attack: String = "Attack-two handed_002"
@@ -103,6 +117,7 @@ var spear_model_scene: PackedScene = preload("res://assets/characters/SPK/Spear 
 var archer_model_scene: PackedScene = preload("res://assets/characters/skelly/Archer.glb")
 var imp_model_scene: PackedScene = preload("res://assets/characters/Puglin.glb")
 var shadow_imp_model_scene: PackedScene = preload("res://assets/characters/Imp.glb")
+var dragon_model_scene: PackedScene = preload("res://assets/characters/monsters/Dragon.fbx")
 var arcane_loot_scene: PackedScene = preload("res://scenes/ArcaneLoot.tscn")
 var world_item_scene: PackedScene = preload("res://scenes/WorldItem.tscn")
 var bone_arrow_scene: PackedScene = preload("res://scenes/BoneArrow.tscn")
@@ -120,17 +135,6 @@ func _ready() -> void:
 	_setup_archetype()
 	
 	if is_boss:
-		max_health = 500.0
-		attack_damage = 28.0
-		move_speed = 2.6
-		attack_range = 3.0
-		attack_cooldown = 1.8
-		detection_radius = 28.0
-		max_leash_distance = 36.0
-		lose_target_distance = 32.0
-		max_chase_duration = 20.0
-		base_scale *= 1.55
-		scale = base_scale
 		_setup_boss_visuals()
 	
 	current_health = max_health
@@ -143,6 +147,8 @@ func set_archetype(type_index: int) -> void:
 	enemy_type = type_index as EnemyType
 	if is_inside_tree():
 		_setup_archetype()
+		if is_boss:
+			_setup_boss_visuals()
 		current_health = max_health
 		update_hp_display()
 
@@ -165,120 +171,154 @@ func _setup_archetype() -> void:
 	var model_yaw: float = PI # Explicit front orientation offset for imported +Z character models
 	anim_player = null
 	
-	match enemy_type:
-		EnemyType.GOBLIN:
-			model_inst = goblin_model_scene.instantiate()
-			model_yaw = PI
-			base_scale = Vector3(0.52, 0.52, 0.52)
-			max_health = 60.0
-			move_speed = 4.3
-			attack_damage = 13.0
-			attack_range = 1.9
-			attack_cooldown = 1.35
-			attack_windup = 0.28
-			attack_clip_duration = 1.46
-			attack_anim_speed = 1.35
-			detection_radius = 16.0
-			max_leash_distance = 22.0
-			lose_target_distance = 20.0
-			max_chase_duration = 9.0
-			patrol_radius = 5.0
-			anim_walk = "Walk-fast"
-			anim_attack = "Attack-two handedAction"
-			anim_idle = "combat_idle"
-			anim_death = "Die-jump-ground-face4 test"
-			
-		EnemyType.SKELETON_SPEAR:
-			model_inst = spear_model_scene.instantiate()
-			model_yaw = PI
-			base_scale = Vector3(0.95, 0.95, 0.95)
-			max_health = 95.0
-			move_speed = 3.8
-			attack_damage = 16.0
-			attack_range = 2.6
-			attack_cooldown = 1.6
-			attack_windup = 0.32
-			attack_clip_duration = 1.33
-			attack_anim_speed = 1.30
-			detection_radius = 16.0
-			max_leash_distance = 24.0
-			lose_target_distance = 22.0
-			max_chase_duration = 10.0
-			patrol_radius = 6.0
-			anim_walk = "run"
-			anim_attack = "stab"
-			anim_idle = "idle"
-			anim_death = "dead"
-			
-		EnemyType.SKELETON_ARCHER:
-			model_inst = archer_model_scene.instantiate()
-			model_yaw = PI
-			base_scale = Vector3(0.9, 0.9, 0.9)
-			max_health = 55.0
-			move_speed = 3.5
-			attack_damage = 14.0
-			attack_range = 14.0
-			attack_cooldown = 2.0
-			attack_windup = 0.48
-			attack_clip_duration = 1.43
-			attack_anim_speed = 1.25
-			detection_radius = 22.0
-			max_leash_distance = 28.0
-			lose_target_distance = 26.0
-			max_chase_duration = 12.0
-			patrol_radius = 7.0
-			anim_walk = "walk"
-			anim_attack = "shoot"
-			anim_idle = "idle"
-			anim_death = "" # Procedural collapse death
-			
-		EnemyType.FIRE_IMP:
-			model_inst = imp_model_scene.instantiate()
-			model_yaw = PI
-			base_scale = Vector3(0.78, 0.78, 0.78)
-			max_health = 45.0
-			move_speed = 4.6
-			attack_damage = 10.0
-			attack_range = 9.0
-			attack_cooldown = 1.8
-			attack_windup = 0.20
-			attack_clip_duration = 0.55
-			attack_anim_speed = 1.10
-			detection_radius = 18.0
-			max_leash_distance = 25.0
-			lose_target_distance = 24.0
-			max_chase_duration = 10.0
-			patrol_radius = 6.0
-			anim_walk = "walk"
-			anim_attack = "attack"
-			anim_idle = "idle"
-			anim_death = ""
-			_apply_imp_materials(model_inst, Color(1.0, 0.45, 0.1), Color(1.0, 0.3, 0.0))
-			anim_player = _build_imp_anim_player(model_inst)
-			
-		EnemyType.SHADOW_IMP:
-			model_inst = shadow_imp_model_scene.instantiate()
-			model_yaw = PI
-			base_scale = Vector3(0.82, 0.82, 0.82)
-			max_health = 50.0
-			move_speed = 4.8
-			attack_damage = 11.0
-			attack_range = 8.5
-			attack_cooldown = 1.8
-			attack_windup = 0.20
-			attack_clip_duration = 0.55
-			attack_anim_speed = 1.10
-			detection_radius = 18.0
-			max_leash_distance = 25.0
-			lose_target_distance = 24.0
-			max_chase_duration = 10.0
-			patrol_radius = 6.0
-			anim_walk = "walk"
-			anim_attack = "attack"
-			anim_idle = "idle"
-			anim_death = ""
-			_apply_imp_materials(model_inst, Color(0.2, 0.1, 0.3), Color(0.85, 0.2, 1.0))
-			anim_player = _build_imp_anim_player(model_inst)
+	if is_boss:
+		model_inst = dragon_model_scene.instantiate()
+		model_yaw = PI
+		base_scale = Vector3(1.2, 1.2, 1.2)
+		max_health = 600.0
+		move_speed = 3.6
+		attack_damage = 25.0
+		attack_range = 3.8
+		attack_cooldown = 1.8
+		attack_windup = 0.40
+		attack_clip_duration = 1.2
+		attack_anim_speed = 1.1
+		detection_radius = 28.0
+		max_leash_distance = 36.0
+		lose_target_distance = 32.0
+		max_chase_duration = 20.0
+		patrol_radius = 8.0
+		anim_walk = "DragonArmature|Dragon_Flying"
+		anim_attack = "DragonArmature|Dragon_Attack"
+		anim_idle = "DragonArmature|Dragon_Flying"
+		anim_death = "DragonArmature|Dragon_Death"
+		elemental_weaknesses = ["ice"]
+		elemental_resistances = ["fire"]
+	else:
+		match enemy_type:
+			EnemyType.GOBLIN:
+				model_inst = goblin_model_scene.instantiate()
+				model_yaw = PI
+				base_scale = Vector3(0.52, 0.52, 0.52)
+				max_health = 60.0
+				move_speed = 3.8 # Slower than player walk (4.8 m/s)
+				attack_damage = 13.0
+				attack_range = 1.9
+				attack_cooldown = 1.35
+				attack_windup = 0.28
+				attack_clip_duration = 1.46
+				attack_anim_speed = 1.35
+				detection_radius = 14.0
+				max_leash_distance = 20.0
+				lose_target_distance = 18.0
+				max_chase_duration = 8.0
+				patrol_radius = 5.0
+				anim_walk = "Walk-fast"
+				anim_attack = "Attack-two handedAction"
+				anim_idle = "combat_idle"
+				anim_death = "Die-jump-ground-face4 test"
+				elemental_weaknesses = ["fire"]
+				elemental_resistances = ["force"]
+				
+			EnemyType.SKELETON_SPEAR:
+				model_inst = spear_model_scene.instantiate()
+				model_yaw = PI
+				base_scale = Vector3(0.95, 0.95, 0.95)
+				max_health = 95.0
+				move_speed = 3.4 # Heavy armored, player walks away cleanly
+				attack_damage = 16.0
+				attack_range = 2.6
+				attack_cooldown = 1.6
+				attack_windup = 0.32
+				attack_clip_duration = 1.33
+				attack_anim_speed = 1.30
+				detection_radius = 15.0
+				max_leash_distance = 22.0
+				lose_target_distance = 19.0
+				max_chase_duration = 9.0
+				patrol_radius = 6.0
+				anim_walk = "run"
+				anim_attack = "stab"
+				anim_idle = "idle"
+				anim_death = "dead"
+				elemental_weaknesses = ["force"]
+				elemental_resistances = ["ice"]
+				
+			EnemyType.SKELETON_ARCHER:
+				model_inst = archer_model_scene.instantiate()
+				model_yaw = PI
+				base_scale = Vector3(0.9, 0.9, 0.9)
+				max_health = 55.0
+				move_speed = 4.2 # Tactical kiter
+				attack_damage = 14.0
+				attack_range = 14.0
+				attack_cooldown = 2.0
+				attack_windup = 0.48
+				attack_clip_duration = 1.43
+				attack_anim_speed = 1.25
+				detection_radius = 20.0
+				max_leash_distance = 26.0
+				lose_target_distance = 24.0
+				max_chase_duration = 12.0
+				patrol_radius = 7.0
+				anim_walk = "walk"
+				anim_attack = "shoot"
+				anim_idle = "idle"
+				anim_death = "" # Procedural collapse death
+				elemental_weaknesses = ["lightning"]
+				elemental_resistances = ["earth"]
+				
+			EnemyType.FIRE_IMP:
+				model_inst = imp_model_scene.instantiate()
+				model_yaw = PI
+				base_scale = Vector3(0.78, 0.78, 0.78)
+				max_health = 45.0 # Fragile glass cannon
+				move_speed = 5.2 # Fast! Faster than player walk (4.8 m/s), requires sprint/CC
+				attack_damage = 10.0
+				attack_range = 9.0
+				attack_cooldown = 1.8
+				attack_windup = 0.20
+				attack_clip_duration = 0.55
+				attack_anim_speed = 1.10
+				detection_radius = 16.0
+				max_leash_distance = 22.0
+				lose_target_distance = 20.0
+				max_chase_duration = 10.0
+				patrol_radius = 6.0
+				anim_walk = "walk"
+				anim_attack = "attack"
+				anim_idle = "idle"
+				anim_death = ""
+				elemental_weaknesses = ["ice"]
+				elemental_resistances = ["fire"]
+				_apply_imp_materials(model_inst, Color(1.0, 0.45, 0.1), Color(1.0, 0.3, 0.0))
+				anim_player = _build_imp_anim_player(model_inst)
+				
+			EnemyType.SHADOW_IMP:
+				model_inst = shadow_imp_model_scene.instantiate()
+				model_yaw = PI
+				base_scale = Vector3(0.82, 0.82, 0.82)
+				max_health = 50.0 # Fragile
+				move_speed = 5.0 # Fast! Requires sprint/CC
+				attack_damage = 11.0
+				attack_range = 8.5
+				attack_cooldown = 1.8
+				attack_windup = 0.20
+				attack_clip_duration = 0.55
+				attack_anim_speed = 1.10
+				detection_radius = 16.0
+				max_leash_distance = 22.0
+				lose_target_distance = 20.0
+				max_chase_duration = 10.0
+				patrol_radius = 6.0
+				anim_walk = "walk"
+				anim_attack = "attack"
+				anim_idle = "idle"
+				anim_death = ""
+				elemental_weaknesses = ["lightning"]
+				elemental_resistances = ["force"]
+				_apply_imp_materials(model_inst, Color(0.2, 0.1, 0.3), Color(0.85, 0.2, 1.0))
+				anim_player = _build_imp_anim_player(model_inst)
 	
 	scale = base_scale
 	if model_inst:
@@ -301,10 +341,10 @@ func _setup_animation_loop_modes(ap: AnimationPlayer) -> void:
 		var anim = ap.get_animation(a_name)
 		var lower = a_name.to_lower()
 		# Looping locomotion, stances, and blocks
-		if lower in ["idle", "walk", "walk-fast", "run", "chase", "run-flee", "flee shoot", "block", "slash walking", "combat_idle"]:
+		if lower in ["idle", "walk", "walk-fast", "run", "chase", "run-flee", "flee shoot", "block", "slash walking", "combat_idle"] or lower.ends_with("flying"):
 			anim.loop_mode = Animation.LOOP_LINEAR
 		# One-shot attacks, hits, deaths, and reactions
-		elif lower in ["attack", "attack-two handedaction", "attack-two handedaction_001", "attack-two handed_002", "slash", "stab", "forceful trust", "shoot", "hit", "dead", "die-jump-ground-face4 test", "kick", "dodge", "stunned", "standing up", "dance-salsa", "happy_002", "cry_001"]:
+		elif lower in ["attack", "attack-two handedaction", "attack-two handedaction_001", "attack-two handed_002", "slash", "stab", "forceful trust", "shoot", "hit", "dead", "die-jump-ground-face4 test", "kick", "dodge", "stunned", "standing up", "dance-salsa", "happy_002", "cry_001"] or lower.ends_with("attack") or lower.ends_with("attack2") or lower.ends_with("death") or lower.ends_with("hit"):
 			anim.loop_mode = Animation.LOOP_NONE
 
 func _setup_goblin_animations(ap: AnimationPlayer) -> void:
@@ -439,8 +479,17 @@ func _setup_boss_visuals() -> void:
 		light.light_color = Color(0.85, 0.1, 1.0)
 		light.light_energy = 5.5
 		light.omni_range = 8.5
+	if has_node("CollisionShape3D"):
+		var col = $CollisionShape3D as CollisionShape3D
+		if col.shape is CapsuleShape3D:
+			var c = col.shape.duplicate() as CapsuleShape3D
+			c.radius = 1.2
+			c.height = 2.6
+			col.shape = c
+			col.position = Vector3(0, 1.3, 0)
 	if hp_bar:
-		hp_bar.text = "👑 GUARDIÁN DEL PORTAL"
+		hp_bar.text = "👑 DRAGÓN ARCANO"
+		hp_bar.position.y = 3.6
 
 func transition_to_state(new_state: AIState, duration: float = 0.0) -> void:
 	if current_state == new_state and new_state != AIState.ATTACK:
@@ -620,6 +669,51 @@ func _physics_process(delta: float) -> void:
 		chill_vfx_node.emitting = false
 	hit_stagger_timer = max(0.0, hit_stagger_timer - delta)
 	
+	# Handle CC timers
+	if freeze_timer > 0.0:
+		freeze_timer -= delta
+		velocity.x = 0.0
+		velocity.z = 0.0
+		if model_container:
+			model_container.modulate = Color(0.5, 0.9, 1.3)
+		if freeze_timer <= 0.0 and model_container:
+			model_container.modulate = Color.WHITE
+		move_and_slide()
+		return
+	
+	if stun_timer > 0.0:
+		stun_timer -= delta
+		velocity.x = lerp(velocity.x, 0.0, delta * 12.0)
+		velocity.z = lerp(velocity.z, 0.0, delta * 12.0)
+		is_winding_up_attack = false
+		move_and_slide()
+		return
+	
+	if root_timer > 0.0:
+		root_timer -= delta
+		velocity.x = 0.0
+		velocity.z = 0.0
+	
+	if earth_sink_timer > 0.0:
+		earth_sink_timer -= delta
+		if model_container:
+			model_container.position.y = -0.18
+		if earth_sink_timer <= 0.0 and model_container:
+			model_container.position.y = 0.0
+	
+	if burn_timer > 0.0:
+		burn_timer -= delta
+		burn_tick_timer += delta
+		if burn_tick_timer >= 0.5:
+			burn_tick_timer = 0.0
+			current_health -= (burn_dps * 0.5)
+			GameManager.spawn_damage_number(global_position + Vector3(0, 1.2, 0), "🔥 -%d" % int(burn_dps * 0.5), Color(1.0, 0.45, 0.1), 0.9)
+			_flash_hit()
+			update_hp_display()
+			if current_health <= 0.0:
+				die()
+				return
+	
 	if enemy_type in [EnemyType.FIRE_IMP, EnemyType.SHADOW_IMP]:
 		_process_procedural_imp_animation(delta)
 	
@@ -672,10 +766,10 @@ func _physics_process(delta: float) -> void:
 			los_lost_timer = 0.0
 		else:
 			los_lost_timer += delta
-			if los_lost_timer >= 2.0: # Lost behind obstacles for 2 seconds
+			if los_lost_timer >= lost_los_duration: # 4.5 seconds lost behind obstacles
 				target_ref = null
 				investigate_position = last_known_target_pos if last_known_target_pos != Vector3.ZERO else global_position
-				transition_to_state(AIState.SEARCH, 3.5)
+				transition_to_state(AIState.SEARCH, 2.5)
 		
 		if target_ref != null:
 			# Leash limit check (except boss within arena)
@@ -685,13 +779,19 @@ func _physics_process(delta: float) -> void:
 			elif t_dist > lose_target_distance:
 				target_ref = null
 				investigate_position = last_known_target_pos if last_known_target_pos != Vector3.ZERO else global_position
-				transition_to_state(AIState.SEARCH, 3.0)
+				transition_to_state(AIState.SEARCH, 2.5)
 			elif current_state == AIState.CHASE and chase_timer <= 0.0 and t_dist > (attack_range * 2.5):
 				target_ref = null
 				investigate_position = last_known_target_pos if last_known_target_pos != Vector3.ZERO else global_position
-				transition_to_state(AIState.SEARCH, 3.0)
+				transition_to_state(AIState.SEARCH, 2.5)
 	
-	var current_effective_speed = move_speed * (chill_slow_factor if chill_timer > 0.0 else 1.0)
+	var current_effective_speed = move_speed
+	if chill_timer > 0.0:
+		current_effective_speed *= chill_slow_factor
+	if earth_sink_timer > 0.0:
+		current_effective_speed *= earth_slow_factor
+	if root_timer > 0.0:
+		current_effective_speed = 0.0
 	
 	# State execution logic
 	match current_state:
@@ -806,6 +906,7 @@ func _physics_process(delta: float) -> void:
 					anim_player.speed_scale = 1.0
 					play_anim(anim_idle, 0.2)
 			if state_timer <= 0.0:
+				target_cooldown = 3.0
 				transition_to_state(AIState.RETURN)
 				
 		AIState.RETURN:
@@ -1282,12 +1383,23 @@ func _process_procedural_imp_animation(delta: float) -> void:
 func find_target() -> Node3D:
 	return detect_player()
 
-func take_damage(amount: float, knockback: Vector3 = Vector3.ZERO) -> void:
+func take_damage(amount: float, knockback: Vector3 = Vector3.ZERO, element: String = "") -> void:
 	if is_dead:
 		return
 	
 	# Block stance reduces damage by 75%
 	var effective_damage = amount * 0.25 if is_blocking else amount
+	
+	# Elemental vulnerability and resistance checks
+	if element != "":
+		if element in elemental_weaknesses:
+			effective_damage *= 1.5
+			GameManager.spawn_damage_number(global_position + Vector3(0, 1.8, 0), "✨ ¡VULNERABLE! (x1.5)", Color(1.0, 0.85, 0.2), 1.3)
+			GameManager.record_bestiary_entry(get_archetype_name(), element, true)
+		elif element in elemental_resistances:
+			effective_damage *= 0.6
+			GameManager.spawn_damage_number(global_position + Vector3(0, 1.8, 0), "🛡️ ¡RESISTE! (-40%)", Color(0.6, 0.75, 0.95), 1.0)
+			GameManager.record_bestiary_entry(get_archetype_name(), element, false)
 	
 	# Boss vulnerability window bonus (+50% damage during recovery!)
 	if is_boss and slam_recover_timer > 0.0:
@@ -1404,12 +1516,34 @@ func _spawn_death_particles(color: Color, amount: int = 24) -> void:
 		p.emitting = true
 		get_tree().create_timer(0.9).timeout.connect(p.queue_free)
 
+func get_archetype_name() -> String:
+	if is_boss:
+		return "Dragon Arcano"
+	match enemy_type:
+		EnemyType.GOBLIN: return "Duende Hostil"
+		EnemyType.SKELETON_SPEAR: return "Esqueleto Lancero"
+		EnemyType.SKELETON_ARCHER: return "Esqueleto Arquero"
+		EnemyType.FIRE_IMP: return "Diablillo de Fuego"
+		EnemyType.SHADOW_IMP: return "Diablo Sombrío"
+	return "Monstruo"
+
 func apply_chill(slow_factor: float = 0.45, duration: float = 4.0) -> void:
 	if is_dead:
 		return
+	ice_stacks += 1
+	if ice_stacks >= 3:
+		ice_stacks = 0
+		freeze_timer = 2.0
+		chill_timer = 0.0
+		velocity = Vector3.ZERO
+		GameManager.spawn_damage_number(global_position + Vector3(0, 1.8, 0), "🧊 ¡CONGELADO!", Color(0.5, 0.9, 1.0), 1.4)
+		_flash_hit()
+		return
+	
 	chill_timer = max(chill_timer, duration)
-	chill_slow_factor = clamp(1.0 - slow_factor, 0.25, 0.85)
-	GameManager.spawn_damage_number(global_position + Vector3(0, 1.4, 0), "❄️ ¡RALENTIZADO!", Color(0.4, 0.85, 1.0), 1.1)
+	var stack_slow = 0.55 if ice_stacks == 1 else 0.35
+	chill_slow_factor = stack_slow
+	GameManager.spawn_damage_number(global_position + Vector3(0, 1.4, 0), "❄️ ¡RALENTIZADO (%d)!" % ice_stacks, Color(0.4, 0.85, 1.0), 1.1)
 	_flash_hit()
 	
 	# Spawn or restart chill snowflake aura particles
@@ -1438,6 +1572,42 @@ func apply_chill(slow_factor: float = 0.45, duration: float = 4.0) -> void:
 	
 	if current_health <= 0.0:
 		die()
+
+func apply_stun(duration: float = 0.4) -> void:
+	if is_dead:
+		return
+	stun_timer = max(stun_timer, duration)
+	is_winding_up_attack = false
+	GameManager.spawn_damage_number(global_position + Vector3(0, 1.4, 0), "⚡ ¡ATURDIDO!", Color(1.0, 0.85, 0.2), 1.15)
+	_flash_hit()
+
+func apply_burn(duration: float = 4.0, dps: float = 6.0) -> void:
+	if is_dead:
+		return
+	burn_timer = max(burn_timer, duration)
+	burn_dps = dps
+	burn_tick_timer = 0.0
+	if enemy_type in [EnemyType.GOBLIN, EnemyType.FIRE_IMP, EnemyType.SHADOW_IMP] and not is_boss:
+		is_fleeing = true
+		flee_timer = 1.6
+		GameManager.spawn_damage_number(global_position + Vector3(0, 1.5, 0), "😱 ¡PÁNICO ÍGNEO!", Color(1.0, 0.4, 0.1), 1.2)
+	else:
+		GameManager.spawn_damage_number(global_position + Vector3(0, 1.4, 0), "🔥 ¡EN LLAMAS!", Color(1.0, 0.5, 0.1), 1.1)
+
+func apply_earth_sink(duration: float = 4.0, slow_pct: float = 0.70) -> void:
+	if is_dead:
+		return
+	earth_sink_timer = max(earth_sink_timer, duration)
+	earth_slow_factor = 1.0 - slow_pct
+	GameManager.spawn_damage_number(global_position + Vector3(0, 1.3, 0), "🪨 ¡HUNDIDO (-70%)!", Color(0.7, 0.55, 0.35), 1.15)
+	_flash_hit()
+
+func apply_root(duration: float = 3.0) -> void:
+	if is_dead:
+		return
+	root_timer = max(root_timer, duration)
+	GameManager.spawn_damage_number(global_position + Vector3(0, 1.4, 0), "🌿 ¡ATADURA ARCANAS!", Color(0.3, 0.9, 0.4), 1.25)
+	_flash_hit()
 
 func update_hp_display() -> void:
 	if hp_bar:

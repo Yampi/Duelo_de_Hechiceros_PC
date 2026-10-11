@@ -41,7 +41,7 @@ func _on_area_3d_body_entered(body: Node3D) -> void:
 		if body.has_method("apply_chill"):
 			body.apply_chill(0.45, 4.0)
 		if body.has_method("take_damage"):
-			body.take_damage(damage, direction * 6.0)
+			body.take_damage(damage, direction * 6.0, "ice")
 		impact()
 	elif not body.is_in_group("player") and body is StaticBody3D:
 		impact()

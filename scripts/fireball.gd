@@ -68,23 +68,20 @@ func explode() -> void:
 				var falloff = 1.0 - (dist / explosion_radius) * 0.4
 				var knockback = (e.global_position - global_position).normalized() * 14.0
 				if e.has_method("take_damage"):
-					e.take_damage(damage * falloff, knockback)
+					e.take_damage(damage * falloff, knockback, "fire")
+				if e.has_method("apply_burn"):
+					e.apply_burn(4.0, 6.0)
 	
-	# Friendly fire to minions and point-blank self-damage
+	# Friendly fire to minions
 	for m in get_tree().get_nodes_in_group("minion"):
 		if is_instance_valid(m) and m.is_inside_tree():
 			var dist = global_position.distance_to(m.global_position)
 			if dist <= explosion_radius:
 				var knockback = (m.global_position - global_position).normalized() * 10.0
 				if m.has_method("take_damage"):
-					m.take_damage(damage * 0.45, knockback)
+					m.take_damage(damage * 0.45, knockback, "fire")
 	
-	for p in get_tree().get_nodes_in_group("player"):
-		if is_instance_valid(p) and p.is_inside_tree():
-			var dist = global_position.distance_to(p.global_position)
-			if dist <= explosion_radius * 0.65:
-				if p.has_method("take_damage"):
-					p.take_damage(damage * 0.3)
+	# Directive 5: Zero friendly fire to the wizard player
 	
 	GameManager.shake_camera(0.42)
 	

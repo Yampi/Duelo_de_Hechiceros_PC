@@ -69,7 +69,9 @@ func init_lightning(start_pos: Vector3, target_pos: Vector3) -> void:
 					hit_targets.append(e)
 					if e.has_method("take_damage"):
 						var knock = (e.global_position - start_pos).normalized() * 8.0
-						e.take_damage(path_damage, knock)
+						e.take_damage(path_damage, knock, "lightning")
+					if e.has_method("apply_stun"):
+						e.apply_stun(0.4)
 	
 	# 2. Damage at endpoint target area
 	for e in enemies:
@@ -81,7 +83,9 @@ func init_lightning(start_pos: Vector3, target_pos: Vector3) -> void:
 					primary_hit = e
 					if e.has_method("take_damage"):
 						var knock = (e.global_position - target_pos).normalized() * 12.0
-						e.take_damage(damage, knock)
+						e.take_damage(damage, knock, "lightning")
+					if e.has_method("apply_stun"):
+						e.apply_stun(0.4)
 				elif primary_hit == null:
 					primary_hit = e
 	
@@ -110,7 +114,9 @@ func init_lightning(start_pos: Vector3, target_pos: Vector3) -> void:
 				
 				if e.has_method("take_damage"):
 					var knock = (e.global_position - chain_origin).normalized() * 7.0
-					e.take_damage(chain_damage, knock)
+					e.take_damage(chain_damage, knock, "lightning")
+				if e.has_method("apply_stun"):
+					e.apply_stun(0.4)
 				GameManager.spawn_damage_number(e.global_position, "⚡ ¡ENLACE!", Color(0.4, 0.85, 1.0), 1.1)
 	
 	# Material and commit

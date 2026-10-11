@@ -15,6 +15,7 @@ const SettingsManager = preload("res://scripts/settings_manager.gd")
 signal spell_button_pressed(slot: int)
 
 @onready var hp_bar: StatBar = $BottomHUD/LeftCluster/HealthBar
+@onready var stamina_bar: StatBar = $BottomHUD/LeftCluster/StaminaBar if has_node("BottomHUD/LeftCluster/StaminaBar") else null
 @onready var mana_bar: StatBar = $BottomHUD/RightCluster/ManaBar
 @onready var target_indicator: TargetIndicator = $TargetIndicator
 @onready var status_bar: StatusIconBar = $BottomHUD/LeftCluster/StatusBar
@@ -272,6 +273,10 @@ func update_hp(current: float, max_val: float) -> void:
 	
 	if hp_bar and hp_bar.has_method("set_values"):
 		hp_bar.set_values(current, max_val)
+
+func update_stamina(current: float, max_val: float) -> void:
+	if stamina_bar and stamina_bar.has_method("set_values"):
+		stamina_bar.set_values(current, max_val)
 
 func update_mana(current: float, max_val: float, regen: float) -> void:
 	if mana_bar and mana_bar.has_method("set_values"):

@@ -54,7 +54,9 @@ func _physics_process(delta: float) -> void:
 				var push_dir = (e.global_position - global_position).normalized()
 				push_dir.y = 0.2
 				if e.has_method("take_damage"):
-					e.take_damage(damage, push_dir * 18.0)
+					e.take_damage(damage, push_dir * 18.0, "force")
+				if e.has_method("apply_stun"):
+					e.apply_stun(1.0)
 	
 	if elapsed >= duration:
 		queue_free()

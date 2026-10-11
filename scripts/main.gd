@@ -50,6 +50,7 @@ func _ready() -> void:
 	player.target_changed.connect(hud.set_target_enemy)
 	player.element_flash_requested.connect(hud.trigger_element_flash)
 	player.cast_failed_no_mana.connect(hud.trigger_no_mana_slot)
+	player.stamina_updated.connect(hud.update_stamina)
 	
 	# Connect HUD signals
 	hud.spell_button_pressed.connect(player.select_spell_slot)

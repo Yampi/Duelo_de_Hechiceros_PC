@@ -11,11 +11,18 @@ signal cast_progress_updated(slot: int, progress: float)
 signal target_changed(target: Node)
 signal element_flash_requested(color: Color)
 signal cast_failed_no_mana(slot: int)
+signal stamina_updated(current: float, max_val: float)
 
 @export var move_speed: float = 7.5
 @export var walk_speed: float = 4.8
 @export var acceleration: float = 18.0
 @export var rotation_speed: float = 16.0
+@export var max_stamina: float = 100.0
+
+var current_stamina: float = 100.0
+var stamina_drain_rate: float = 14.5
+var stamina_regen_rate: float = 22.0
+var is_exhausted: bool = false
 
 var selected_spell: int = 1 # 1 to 5
 var aim_point: Vector3 = Vector3.ZERO
@@ -68,6 +75,7 @@ func _ready() -> void:
 		anim_player.playback_default_blend_time = 0.15
 		play_anim("Idle")
 	emit_signal("spell_changed", selected_spell)
+	emit_signal("stamina_updated", current_stamina, max_stamina)
 
 func _apply_wizard_materials() -> void:
 	# Configure Quaternius Wizard character materials and textures
@@ -341,8 +349,23 @@ func _physics_process(delta: float) -> void:
 	# WASD 3D Camera Movement
 	var input_x = Input.get_axis("move_left", "move_right")
 	var input_y = Input.get_axis("move_up", "move_down")
+	var has_move_input = abs(input_x) > 0.01 or abs(input_y) > 0.01
 	
-	var is_sprinting = Input.is_key_pressed(KEY_SHIFT) or (haste_timer > 0.0)
+	if is_exhausted and current_stamina >= 15.0:
+		is_exhausted = false
+	
+	var wants_sprint = (Input.is_key_pressed(KEY_SHIFT) or haste_timer > 0.0) and has_move_input
+	var is_sprinting = wants_sprint and not is_exhausted and current_stamina > 0.0
+	
+	if is_sprinting:
+		current_stamina = max(0.0, current_stamina - stamina_drain_rate * delta)
+		if current_stamina <= 0.0:
+			is_exhausted = true
+	else:
+		current_stamina = min(max_stamina, current_stamina + stamina_regen_rate * delta)
+	
+	stamina_updated.emit(current_stamina, max_stamina)
+	
 	var base_speed = move_speed if is_sprinting else walk_speed
 	var current_move_speed = base_speed * (0.35 if is_channeling else (1.30 if haste_timer > 0.0 else 1.0))
 	
