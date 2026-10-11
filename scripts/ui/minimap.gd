@@ -112,6 +112,27 @@ func _draw() -> void:
 				var rim_pt = center + rim_dir * (radius - 8.0)
 				draw_circle(rim_pt, 3.5, Color(0.2, 0.85, 1.0, 0.8))
 		
+		# Niebla de guerra en minimapa: arco sutil de alcance de visión (20m)
+		var reveal_px = 20.0 * scale_factor
+		draw_arc(center, reveal_px, 0, TAU, 32, Color(0.35, 0.85, 1.0, 0.4), 1.0)
+		
+		# Enemigos visibles filtrados por radio de niebla de guerra (20m)
+		for enemy in get_tree().get_nodes_in_group("enemy"):
+			if is_instance_valid(enemy) and enemy.is_inside_tree() and not enemy.get("is_dead"):
+				var e_diff = enemy.global_position - player_pos
+				var e_dist = Vector2(e_diff.x, e_diff.z).length()
+				if e_dist <= 20.0:
+					var is_vis = true
+					if GameManager.fog_of_war:
+						is_vis = GameManager.fog_of_war.is_point_visible(enemy.global_position)
+					if is_vis:
+						var e_pt = center + _world_to_minimap_offset(e_diff, scale_factor)
+						var is_boss = enemy.get("is_boss") == true
+						var dot_col = Color(1.0, 0.3, 0.85) if is_boss else UIConstants.DANGER_RED
+						var dot_radius = 5.0 if is_boss else 3.2
+						draw_circle(e_pt, dot_radius, dot_col)
+						draw_circle(e_pt, dot_radius * 0.5, Color(1, 1, 1, 0.9))
+		
 		# Marcador de objetivo activo con pulso dinámico y flecha direccional
 		if GameManager.active_objective_pos != Vector3.ZERO:
 			var obj_diff = GameManager.active_objective_pos - player_pos

@@ -4,6 +4,7 @@ enum GameMode { SURVIVAL, EXPLORATION, OBJECTIVE }
 
 const InventoryManager = preload("res://scripts/inventory/inventory_manager.gd")
 const ItemDB = preload("res://scripts/inventory/item_db.gd")
+const FogOfWar = preload("res://scripts/fog/fog_of_war.gd")
 
 signal reagents_updated
 signal shrines_updated
@@ -46,6 +47,7 @@ var discovered_zones: Array[int] = [1] # Zone 1 is known from the start
 var discovered_pois: Array[Dictionary] = []
 var active_objective: String = ""
 var active_objective_pos: Vector3 = Vector3.ZERO
+var fog_of_war: FogOfWar = null
 
 # Inventory System (Session Persistent)
 var inventory: InventoryManager = null
@@ -328,9 +330,13 @@ func reset_for_new_game(mode: GameMode) -> void:
 	base_mana_regen = 2.0
 	arcana_empowered = false
 	
-	# Reset discovery
+	# Reset discovery and fog of war
 	discovered_zones = [1]
 	discovered_pois.clear()
+	if not fog_of_war:
+		fog_of_war = FogOfWar.new()
+	else:
+		fog_of_war.reset_fog()
 	
 	# Default starter objective
 	active_objective = "Explora el Bosque y encuentra el Cristal Arcano"

@@ -7,6 +7,10 @@ const EncounterManager = preload("res://scripts/encounter_manager.gd")
 @onready var player: CharacterBody3D = $Wizard
 @onready var hud = $HUD
 @onready var camera_rig: Node3D = $CameraRig
+@onready var world_env: WorldEnvironment = $WorldEnvironment
+
+var target_fog_color: Color = Color(0.68, 0.78, 0.88)
+var target_fog_density: float = 0.006
 
 var enemy_scene: PackedScene = preload("res://scenes/Enemy.tscn")
 var encounter_manager: EncounterManager = null
@@ -70,8 +74,20 @@ func _ready() -> void:
 			map_generator.portal_instance.level_completed.connect(hud.show_victory)
 	elif GameManager.current_mode == GameManager.GameMode.SURVIVAL:
 		_spawn_survival_wave(1)
+	
+	_update_target_atmospheric_fog(MapConfig.ZoneId.PRADERA_INICIAL)
+	if player and GameManager.fog_of_war:
+		GameManager.fog_of_war.update_player_position(player.global_position)
 
 func _process(delta: float) -> void:
+	if player and GameManager.fog_of_war:
+		GameManager.fog_of_war.update_player_position(player.global_position)
+	
+	if world_env and world_env.environment and world_env.environment.fog_enabled:
+		var env = world_env.environment
+		env.fog_light_color = env.fog_light_color.lerp(target_fog_color, delta * 1.5)
+		env.fog_density = lerp(env.fog_density, target_fog_density, delta * 1.5)
+	
 	_check_poi_discovery()
 	match GameManager.current_mode:
 		GameManager.GameMode.SURVIVAL:
@@ -103,8 +119,24 @@ func _check_poi_discovery() -> void:
 		if p_pos.distance_to(p["pos"]) <= p["dist"]:
 			GameManager.discover_poi(p["id"], p["name"], p["pos"], p["icon"])
 
+func _update_target_atmospheric_fog(zone_id: int) -> void:
+	match zone_id:
+		MapConfig.ZoneId.PRADERA_INICIAL:
+			target_fog_color = Color(0.68, 0.78, 0.88)
+			target_fog_density = 0.006
+		MapConfig.ZoneId.BOSQUE_EXTERIOR:
+			target_fog_color = Color(0.32, 0.46, 0.38)
+			target_fog_density = 0.014
+		MapConfig.ZoneId.CORAZON_BOSQUE:
+			target_fog_color = Color(0.24, 0.18, 0.36)
+			target_fog_density = 0.022
+		MapConfig.ZoneId.RUINAS_ARCANAS:
+			target_fog_color = Color(0.38, 0.26, 0.22)
+			target_fog_density = 0.018
+
 func _on_zone_changed(zone_id: int, zone_data: Dictionary) -> void:
 	GameManager.discover_zone(zone_id)
+	_update_target_atmospheric_fog(zone_id)
 	hud.show_zone_banner(zone_data["title"], zone_data["subtitle"], zone_data.get("color", Color(1, 0.85, 0.4)))
 
 func _on_encounter_started(enc_id: String, count: int) -> void:

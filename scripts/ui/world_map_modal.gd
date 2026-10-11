@@ -305,9 +305,19 @@ func _on_map_canvas_draw() -> void:
 				var pt2 = _world_to_canvas(p2, c_size)
 				map_canvas.draw_line(pt1, pt2, road_color, 3.0 * zoom_level)
 	
-	# Draw Discovered POIs
+	# Draw Fog of War overlay layer
+	if GameManager.fog_of_war and GameManager.fog_of_war.get_fog_texture():
+		var p_fog_tl = _world_to_canvas(Vector3(-128.0, 0, -128.0), c_size)
+		var p_fog_br = _world_to_canvas(Vector3(128.0, 0, 128.0), c_size)
+		var fog_rect = Rect2(p_fog_tl, p_fog_br - p_fog_tl)
+		var f_tex = GameManager.fog_of_war.get_fog_texture()
+		map_canvas.draw_texture_rect(f_tex, fog_rect, false)
+	
+	# Draw Discovered POIs (only in explored territory)
 	for poi in GameManager.discovered_pois:
 		var p_pos = poi.get("pos", Vector3.ZERO) as Vector3
+		if GameManager.fog_of_war and not GameManager.fog_of_war.is_point_explored(p_pos):
+			continue
 		var pt = _world_to_canvas(p_pos, c_size)
 		var p_name = poi.get("name", "Punto de Interés")
 		var poi_id = poi.get("id", "")
