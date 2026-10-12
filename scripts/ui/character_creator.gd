@@ -20,6 +20,11 @@ const CharacterAppearance = preload("res://scripts/character_appearance.gd")
 @onready var container_gem: GridContainer = find_child("GridGem", true, false)
 @onready var container_expr: VBoxContainer = find_child("VBoxExpr", true, false)
 
+@onready var cam_3d: Camera3D = find_child("Camera3D", true, false)
+@onready var btn_view_face: Button = find_child("BtnViewFace", true, false)
+@onready var btn_view_body: Button = find_child("BtnViewBody", true, false)
+@onready var btn_view_staff: Button = find_child("BtnViewStaff", true, false)
+
 @onready var btn_auto_rotate: Button = find_child("BtnAutoRotate", true, false)
 @onready var btn_rot_left: Button = find_child("BtnRotLeft", true, false)
 @onready var btn_rot_right: Button = find_child("BtnRotRight", true, false)
@@ -36,9 +41,12 @@ const CharacterAppearance = preload("res://scripts/character_appearance.gd")
 @onready var lbl_status: Label = find_child("LblStatus", true, false)
 
 var current_config: Dictionary = {}
-var auto_rotate: bool = true
+var auto_rotate: bool = false
 var rotate_speed: float = 0.8
 var manual_rot_target: float = 0.0
+
+var cam_target_pos: Vector3 = Vector3(0, 1.05, 1.1)
+var cam_target_fov: float = 32.0
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -66,6 +74,10 @@ func _process(delta: float) -> void:
 			turntable.rotation.y += rotate_speed * delta
 		else:
 			turntable.rotation.y = lerp_angle(turntable.rotation.y, manual_rot_target, 10.0 * delta)
+	
+	if cam_3d:
+		cam_3d.position = cam_3d.position.lerp(cam_target_pos, 8.0 * delta)
+		cam_3d.fov = lerp(cam_3d.fov, cam_target_fov, 8.0 * delta)
 
 func open_creator() -> void:
 	visible = true
@@ -74,6 +86,17 @@ func open_creator() -> void:
 		edit_name.text = current_config.get("character_name", "Cornelius")
 	if lbl_status:
 		lbl_status.text = ""
+	
+	# Start facing directly at the player with close-up face view
+	if turntable:
+		turntable.rotation.y = 0.0
+	manual_rot_target = 0.0
+	auto_rotate = false
+	cam_target_pos = Vector3(0, 1.05, 1.1)
+	cam_target_fov = 32.0
+	if btn_auto_rotate:
+		btn_auto_rotate.text = "Giro Auto: OFF"
+	
 	_refresh_preview()
 	_update_active_button_highlights()
 	
@@ -191,6 +214,22 @@ func _create_swatch_button(label_text: String, col: Color, on_click: Callable) -
 	return btn
 
 func _connect_controls() -> void:
+	if btn_view_face:
+		btn_view_face.pressed.connect(func():
+			cam_target_pos = Vector3(0, 1.05, 1.0)
+			cam_target_fov = 30.0
+		)
+	if btn_view_body:
+		btn_view_body.pressed.connect(func():
+			cam_target_pos = Vector3(0, 0.95, 1.85)
+			cam_target_fov = 42.0
+		)
+	if btn_view_staff:
+		btn_view_staff.pressed.connect(func():
+			cam_target_pos = Vector3(0.28, 1.0, 1.15)
+			cam_target_fov = 34.0
+		)
+
 	if btn_auto_rotate:
 		btn_auto_rotate.pressed.connect(func():
 			auto_rotate = not auto_rotate

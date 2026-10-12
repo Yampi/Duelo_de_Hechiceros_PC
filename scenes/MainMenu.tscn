@@ -1,7 +1,7 @@
 [gd_scene load_steps=15 format=3 uid="uid://main_menu_v2"]
 
 [ext_resource type="Script" path="res://scripts/main_menu.gd" id="1_menu"]
-[ext_resource type="PackedScene" uid="uid://wizard_cornelius_01" path="res://scenes/Wizard.tscn" id="2_wizard"]
+[ext_resource type="PackedScene" path="res://assets/characters/wizard/WizardModel.tscn" id="2_wizard_model"]
 [ext_resource type="Theme" uid="uid://fantasy_theme_duelo_01" path="res://assets/ui/FantasyTheme.tres" id="3_theme"]
 [ext_resource type="FontFile" path="res://assets/ui/fonts/Cinzel.ttf" id="4_cinzel"]
 [ext_resource type="Texture2D" path="res://assets/ui/frames/divider-000.png" id="5_divider"]
@@ -111,8 +111,8 @@ shadow_enabled = true
 [node name="Floor" type="MeshInstance3D" parent="ViewportContainer/SubViewport"]
 mesh = SubResource("PlaneMesh_floor")
 
-[node name="WizardModel" parent="ViewportContainer/SubViewport" instance=ExtResource("2_wizard")]
-transform = Transform3D(0.866025, 0, 0.5, 0, 1, 0, -0.5, 0, 0.866025, 0.8, 0, 0)
+[node name="WizardModel" parent="ViewportContainer/SubViewport" instance=ExtResource("2_wizard_model")]
+transform = Transform3D(0.007267, 0, -0.001856, 0, 0.0075, 0, 0.001856, 0, 0.007267, 0.8, 0, 0)
 
 [node name="Sparks" type="GPUParticles3D" parent="ViewportContainer/SubViewport"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.8, 0.8, 0)
