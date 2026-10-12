@@ -49,10 +49,12 @@ signal spell_button_pressed(slot: int)
 @onready var inventory_ui: Control = $InventoryUI
 @onready var world_map_modal: Control = $WorldMapModal
 @onready var grimoire_modal: Control = $GrimoireModal if has_node("GrimoireModal") else null
+@onready var crafting_modal: Control = $CraftingModal if has_node("CraftingModal") else null
 
 @onready var btn_inv_toggle: Button = $BottomHUD/RightCluster/NavRow/BtnInvToggle
 @onready var btn_map_toggle: Button = $BottomHUD/RightCluster/NavRow/BtnMapToggle
 @onready var btn_grimoire_toggle: Button = find_child("BtnGrimoireToggle", true, false)
+@onready var btn_craft_toggle: Button = find_child("BtnCraftToggle", true, false)
 
 @onready var game_over_panel: Control = $GameOverPanel
 @onready var victory_panel: Control = $VictoryPanel
@@ -97,6 +99,9 @@ func _ready() -> void:
 	if btn_grimoire_toggle:
 		btn_grimoire_toggle.pressed.connect(toggle_grimoire)
 		btn_grimoire_toggle.icon = IconRegistry.get_icon("spells", "spell_book")
+	if btn_craft_toggle:
+		btn_craft_toggle.pressed.connect(toggle_crafting)
+		btn_craft_toggle.icon = IconRegistry.get_icon("ui", "crafting")
 	if minimap and minimap.has_signal("open_world_map_requested"):
 		minimap.open_world_map_requested.connect(toggle_world_map)
 	
@@ -231,11 +236,17 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.keycode == KEY_G:
 			toggle_grimoire()
 			get_viewport().set_input_as_handled()
+		elif event.keycode == KEY_C:
+			toggle_crafting()
+			get_viewport().set_input_as_handled()
 		elif event.keycode == KEY_H:
 			toggle_control_hints()
 			get_viewport().set_input_as_handled()
 		elif event.keycode == KEY_ESCAPE:
-			if grimoire_modal and grimoire_modal.visible:
+			if crafting_modal and crafting_modal.visible:
+				toggle_crafting()
+				get_viewport().set_input_as_handled()
+			elif grimoire_modal and grimoire_modal.visible:
 				toggle_grimoire()
 				get_viewport().set_input_as_handled()
 			elif inventory_ui and inventory_ui.visible:
@@ -275,6 +286,14 @@ func toggle_grimoire() -> void:
 	if grimoire_modal and grimoire_modal.has_method("toggle_grimoire"):
 		var will_open = not grimoire_modal.visible
 		grimoire_modal.toggle_grimoire()
+		var am = get_node_or_null("/root/AudioManager")
+		if am and am.has_method("play_ui"):
+			am.play_ui("open" if will_open else "close")
+
+func toggle_crafting() -> void:
+	if crafting_modal and crafting_modal.has_method("toggle_crafting"):
+		var will_open = not crafting_modal.visible
+		crafting_modal.toggle_crafting()
 		var am = get_node_or_null("/root/AudioManager")
 		if am and am.has_method("play_ui"):
 			am.play_ui("open" if will_open else "close")

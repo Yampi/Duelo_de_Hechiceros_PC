@@ -1,0 +1,219 @@
+[gd_scene load_steps=7 format=3 uid="uid://crafting_modal_scene_01"]
+
+[ext_resource type="Script" path="res://scripts/ui/crafting_modal.gd" id="1_script"]
+[ext_resource type="Theme" uid="uid://fantasy_theme_duelo_01" path="res://assets/ui/FantasyTheme.tres" id="2_theme"]
+[ext_resource type="FontFile" path="res://assets/ui/fonts/Cinzel.ttf" id="3_cinzel"]
+[ext_resource type="Texture2D" path="res://assets/ui/frames/divider-000.png" id="4_divider"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_modal"]
+bg_color = Color(0.05, 0.07, 0.1, 0.96)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.85, 0.72, 0.35, 0.85)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+content_margin_left = 24.0
+content_margin_top = 20.0
+content_margin_right = 24.0
+content_margin_bottom = 20.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_details"]
+bg_color = Color(0.03, 0.045, 0.07, 0.85)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.85, 0.72, 0.35, 0.4)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+content_margin_left = 16.0
+content_margin_top = 16.0
+content_margin_right = 16.0
+content_margin_bottom = 16.0
+
+[node name="CraftingModal" type="Control"]
+process_mode = 3
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_script")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.02, 0.03, 0.05, 0.78)
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="Center"]
+custom_minimum_size = Vector2(880, 580)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_modal")
+
+[node name="VBox" type="VBoxContainer" parent="Center/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="HeaderRow" type="HBoxContainer" parent="Center/Panel/VBox"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="Center/Panel/VBox/HeaderRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 0.88, 0.4, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_fonts/font = ExtResource("3_cinzel")
+theme_override_font_sizes/font_size = 22
+text = "⚒ TALLER ARCANO Y CREACIÓN"
+
+[node name="BtnClose" type="Button" parent="Center/Panel/VBox/HeaderRow"]
+custom_minimum_size = Vector2(36, 36)
+layout_mode = 2
+text = "✕"
+
+[node name="Divider" type="TextureRect" parent="Center/Panel/VBox"]
+modulate = Color(1, 0.85, 0.35, 0.75)
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2
+texture = ExtResource("4_divider")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="TabsRow" type="HBoxContainer" parent="Center/Panel/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="TabAlchemy" type="Button" parent="Center/Panel/VBox/TabsRow"]
+custom_minimum_size = Vector2(130, 36)
+layout_mode = 2
+text = "🧪 Alquimia"
+
+[node name="TabCooking" type="Button" parent="Center/Panel/VBox/TabsRow"]
+custom_minimum_size = Vector2(130, 36)
+layout_mode = 2
+text = "🍲 Cocina"
+
+[node name="TabForge" type="Button" parent="Center/Panel/VBox/TabsRow"]
+custom_minimum_size = Vector2(130, 36)
+layout_mode = 2
+text = "⚒ Forja Rúnica"
+
+[node name="TabHerbalism" type="Button" parent="Center/Panel/VBox/TabsRow"]
+custom_minimum_size = Vector2(130, 36)
+layout_mode = 2
+text = "🌿 Herbolaria"
+
+[node name="ContentSplit" type="HBoxContainer" parent="Center/Panel/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 18
+
+[node name="RecipesSection" type="VBoxContainer" parent="Center/Panel/VBox/ContentSplit"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="RecipesTitle" type="Label" parent="Center/Panel/VBox/ContentSplit/RecipesSection"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.45, 1)
+theme_override_font_sizes/font_size = 13
+text = "RECETAS DISPONIBLES"
+
+[node name="RecipesScroll" type="ScrollContainer" parent="Center/Panel/VBox/ContentSplit/RecipesSection"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="RecipesList" type="VBoxContainer" parent="Center/Panel/VBox/ContentSplit/RecipesSection/RecipesScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="DetailsSection" type="PanelContainer" parent="Center/Panel/VBox/ContentSplit"]
+custom_minimum_size = Vector2(380, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_details")
+
+[node name="DetailsVBox" type="VBoxContainer" parent="Center/Panel/VBox/ContentSplit/DetailsSection"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="HeaderBox" type="HBoxContainer" parent="Center/Panel/VBox/ContentSplit/DetailsSection/DetailsVBox"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="DetailIcon" type="TextureRect" parent="Center/Panel/VBox/ContentSplit/DetailsSection/DetailsVBox/HeaderBox"]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="NameStationBox" type="VBoxContainer" parent="Center/Panel/VBox/ContentSplit/DetailsSection/DetailsVBox/HeaderBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="DetailName" type="Label" parent="Center/Panel/VBox/ContentSplit/DetailsSection/DetailsVBox/HeaderBox/NameStationBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.88, 0.4, 1)
+theme_override_fonts/font = ExtResource("3_cinzel")
+theme_override_font_sizes/font_size = 16
+text = "Selecciona una receta"
+
+[node name="DetailStation" type="Label" parent="Center/Panel/VBox/ContentSplit/DetailsSection/DetailsVBox/HeaderBox/NameStationBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.75, 0.85, 0.9)
+theme_override_font_sizes/font_size = 11
+text = "Taller de Alquimia"
+
+[node name="DetailDesc" type="Label" parent="Center/Panel/VBox/ContentSplit/DetailsSection/DetailsVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.88, 0.92, 1)
+theme_override_font_sizes/font_size = 12
+autowrap_mode = 3
+text = "Descripción de la receta."
+
+[node name="IngTitle" type="Label" parent="Center/Panel/VBox/ContentSplit/DetailsSection/DetailsVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.45, 1)
+theme_override_font_sizes/font_size = 12
+text = "INGREDIENTES REQUERIDOS:"
+
+[node name="IngredientsScroll" type="ScrollContainer" parent="Center/Panel/VBox/ContentSplit/DetailsSection/DetailsVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="IngredientsBox" type="VBoxContainer" parent="Center/Panel/VBox/ContentSplit/DetailsSection/DetailsVBox/IngredientsScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="LblFeedback" type="Label" parent="Center/Panel/VBox/ContentSplit/DetailsSection/DetailsVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+horizontal_alignment = 1
+
+[node name="BtnCraft" type="Button" parent="Center/Panel/VBox/ContentSplit/DetailsSection/DetailsVBox"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "⚒ FABRICAR"

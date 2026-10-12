@@ -1,0 +1,38 @@
+[gd_scene load_steps=5 format=3 uid="uid://gathering_node_scene_01"]
+
+[ext_resource type="Script" path="res://scripts/gathering_node.gd" id="1_gather"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_node"]
+albedo_color = Color(0.2, 0.8, 0.4, 1)
+roughness = 0.4
+emission_enabled = true
+emission = Color(0.1, 0.6, 0.3, 1)
+emission_energy_multiplier = 1.5
+
+[sub_resource type="SphereMesh" id="SphereMesh_node"]
+material = SubResource("StandardMaterial3D_node")
+radius = 0.35
+height = 0.7
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_prompt"]
+radius = 3.5
+
+[node name="GatheringNode" type="Node3D" groups=["gathering_node"]]
+script = ExtResource("1_gather")
+
+[node name="VisualMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.35, 0)
+mesh = SubResource("SphereMesh_node")
+
+[node name="AuraLight" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+light_color = Color(0.3, 0.9, 0.5, 1)
+light_energy = 1.2
+omni_range = 3.0
+
+[node name="InteractionArea" type="Area3D" parent="."]
+collision_layer = 0
+collision_mask = 2
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="InteractionArea"]
+shape = SubResource("SphereShape3D_prompt")

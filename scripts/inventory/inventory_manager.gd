@@ -152,12 +152,51 @@ func use_item(item_id: String, player: Node = null) -> bool:
 			GameManager.spawn_damage_number(player_pos + Vector3(0, 1.2, 0), "💧 +%d MP" % int(def.effect_value), Color(0.3, 0.8, 1.0), 1.25)
 			if player and player.has_method("_pulse_staff"):
 				player._pulse_staff(Color(0.3, 0.8, 1.0), 0.4)
+		"heal_both":
+			GameManager.player_health = min(GameManager.player_max_health, GameManager.player_health + def.effect_value)
+			GameManager.player_mana = min(GameManager.player_max_mana, GameManager.player_mana + def.effect_value)
+			GameManager.spawn_damage_number(player_pos + Vector3(0, 1.2, 0), "✨ +%d HP/MP" % int(def.effect_value), Color(0.9, 0.8, 0.2), 1.3)
+			if player and player.has_method("_pulse_staff"):
+				player._pulse_staff(Color(0.9, 0.8, 0.2), 0.5)
 		"haste_buff":
 			if player and player.has_method("apply_haste_buff"):
-				player.apply_haste_buff(def.effect_value)
+				player.apply_haste_buff(def.effect_duration if def.effect_duration > 0.0 else def.effect_value)
 			GameManager.spawn_damage_number(player_pos + Vector3(0, 1.4, 0), "⚡ ¡CELERIDAD!", Color(0.9, 0.3, 1.0), 1.3)
 			if player and player.has_method("_pulse_staff"):
 				player._pulse_staff(Color(0.9, 0.3, 1.0), 0.6)
+		"regen_hp":
+			if player and player.has_method("apply_regen_buff"):
+				player.apply_regen_buff("hp", def.effect_value, def.effect_duration)
+			GameManager.spawn_damage_number(player_pos + Vector3(0, 1.2, 0), "🍎 +%.0f HP/s (%ds)" % [def.effect_value, int(def.effect_duration)], Color(0.3, 1.0, 0.5), 1.2)
+			if player and player.has_method("_pulse_staff"):
+				player._pulse_staff(Color(0.3, 1.0, 0.5), 0.4)
+		"regen_mp":
+			if player and player.has_method("apply_regen_buff"):
+				player.apply_regen_buff("mp", def.effect_value, def.effect_duration)
+			GameManager.spawn_damage_number(player_pos + Vector3(0, 1.2, 0), "🍄 +%.0f MP/s (%ds)" % [def.effect_value, int(def.effect_duration)], Color(0.3, 0.8, 1.0), 1.2)
+			if player and player.has_method("_pulse_staff"):
+				player._pulse_staff(Color(0.3, 0.8, 1.0), 0.4)
+		"invulnerability":
+			if player and player.has_method("apply_invulnerability_buff"):
+				player.apply_invulnerability_buff(def.effect_duration)
+			GameManager.spawn_damage_number(player_pos + Vector3(0, 1.5, 0), "🛡️ ¡INMUNIDAD ARCANA!", Color(1.0, 0.85, 0.2), 1.5)
+			if player and player.has_method("_pulse_staff"):
+				player._pulse_staff(Color(1.0, 0.85, 0.2), 0.8)
+		"banquet_buff":
+			if player and player.has_method("apply_banquet_buff"):
+				player.apply_banquet_buff(def.effect_value, def.effect_duration)
+			GameManager.spawn_damage_number(player_pos + Vector3(0, 1.5, 0), "👑 ¡BANQUETE DEL ARCHIMAGO!", Color(1.0, 0.9, 0.3), 1.5)
+			if player and player.has_method("_pulse_staff"):
+				player._pulse_staff(Color(1.0, 0.9, 0.3), 0.8)
+		"teleport_escape":
+			if player and player.has_method("cast_teleport"):
+				player.cast_teleport()
+			GameManager.spawn_damage_number(player_pos + Vector3(0, 1.2, 0), "🌀 ¡SALTO ETÉREO!", Color(0.4, 0.6, 1.0), 1.2)
+		"equip_relic":
+			if player and player.has_method("toggle_equip_relic"):
+				player.toggle_equip_relic(def.id)
+			else:
+				GameManager.spawn_damage_number(player_pos + Vector3(0, 1.2, 0), "💍 Reliquia Activada", Color(0.85, 0.7, 0.3), 1.2)
 		_:
 			item_used.emit(item_id, false)
 			return false

@@ -35,11 +35,37 @@ const SPELLS: Dictionary = {
 const ITEMS: Dictionary = {
 	"potion_health": "res://assets/ui/icons/consumables/potion_health.png",
 	"potion_mana": "res://assets/ui/icons/consumables/potion_mana.png",
+	"potion_health_greater": "res://assets/ui/icons/consumables/potion_health.png",
+	"potion_mana_greater": "res://assets/ui/icons/consumables/potion_mana.png",
+	"potion_elixir": "res://assets/ui/icons/_unused/potion_elixir.png",
+	"potion_invulnerability": "res://assets/ui/icons/spells/spell_arcane_shield.png",
 	"magic_scroll": "res://assets/ui/icons/items/item_magic_scroll.png",
+	"scroll_teleport": "res://assets/ui/icons/spells/spell_teleport.png",
 	"apple": "res://assets/ui/icons/items/item_apple.png",
-	"sulfur": "res://assets/ui/icons/spells/fire_flame.png",
+	"baked_apple": "res://assets/ui/icons/items/item_apple.png",
+	"berry": "res://assets/ui/icons/spells/nature_tree.png",
+	"mushroom_stew": "res://assets/ui/icons/consumables/potion_mana.png",
+	"roasted_meat": "res://assets/ui/icons/spells/fire_flame.png",
+	"sorcerer_banquet": "res://assets/ui/icons/status/buff_health.png",
 	"clover": "res://assets/ui/icons/items/item_clover.png",
+	"blood_root": "res://assets/ui/icons/spells/nature_tree.png",
+	"bioluminescent_mushroom": "res://assets/ui/icons/spells/arcane_bolt.png",
+	"star_lotus": "res://assets/ui/icons/spells/arcane_aura.png",
+	"sulfur": "res://assets/ui/icons/spells/fire_flame.png",
+	"arcane_iron": "res://assets/ui/icons/status/shield_physical.png",
+	"obsidian_shard": "res://assets/ui/icons/status/shield_magic.png",
+	"gold_nugget": "res://assets/ui/icons/status/shield_lightning.png",
+	"crystallized_ether": "res://assets/ui/icons/items/item_arcane_crystal.png",
+	"skeleton_bone": "res://assets/ui/icons/abilities/ability_basic_attack.png",
+	"goblin_tooth": "res://assets/ui/icons/target/target_enemy.png",
+	"wyvern_scale": "res://assets/ui/icons/_unused/creature_dragon.png",
+	"fire_core": "res://assets/ui/icons/spells/spell_fireball.png",
+	"amulet_vitality": "res://assets/ui/icons/status/buff_health.png",
+	"ring_mana_flow": "res://assets/ui/icons/status/shield_magic.png",
+	"talisman_swiftness": "res://assets/ui/icons/items/item_magic_scroll.png",
+	"brooch_pyromancer": "res://assets/ui/icons/spells/fire_flame.png",
 	"arcane_crystal": "res://assets/ui/icons/items/item_arcane_crystal.png",
+	"forest_heart": "res://assets/ui/icons/items/item_arcane_crystal.png",
 	# Alias para compatibilidad con sistema de reactivos
 	"scroll": "res://assets/ui/icons/items/item_magic_scroll.png",
 	"core": "res://assets/ui/icons/items/item_arcane_crystal.png"
@@ -66,7 +92,8 @@ const UI: Dictionary = {
 	"target_reticule": "res://assets/ui/icons/target/target_reticule.png",
 	"inventory": "res://assets/ui/icons/spells/spell_book.png",
 	"map": "res://assets/ui/icons/items/item_magic_scroll.png",
-	"shrine": "res://assets/ui/icons/spells/arcane_aura.png"
+	"shrine": "res://assets/ui/icons/spells/arcane_aura.png",
+	"crafting": "res://assets/ui/icons/_unused/potion_elixir.png"
 }
 
 const POI: Dictionary = {

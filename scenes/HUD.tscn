@@ -19,6 +19,7 @@
 [ext_resource type="Shader" path="res://scripts/ui/screen_effects.gdshader" id="25_shader_fx"]
 [ext_resource type="PackedScene" uid="uid://pause_menu_scene_01" path="res://scenes/ui/PauseMenu.tscn" id="26_pause"]
 [ext_resource type="PackedScene" path="res://scenes/ui/GrimoireModal.tscn" id="27_grim"]
+[ext_resource type="PackedScene" uid="uid://crafting_modal_scene_01" path="res://scenes/ui/CraftingModal.tscn" id="28_craft"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_vig"]
 shader = ExtResource("24_shader_vig")
@@ -140,9 +141,9 @@ theme_override_font_sizes/font_size = 11
 text = "• WASD: Mover (Shift: Correr)
 • Ratón: Apuntar | Clic Izq: Canalizar
 • Clic Der: Orbitar Cámara | Rueda: Zoom
-• [1-9]: Hechizos y habilidades
-• [Q]: Poción Salud | [E]: Poción Maná
-• [I]: Inventario | [M]: Mapa | [H]: Ocultar"
+• [1-9]: Hechizos | [F]: Escudo Arcano
+• [Q]: Poción Salud | [E]: Recolectar / Usar
+• [I]: Inventario | [C]: Taller | [G]: Grimorio | [M]: Mapa"
 
 [node name="HintBadge" type="Button" parent="."]
 visible = false
@@ -354,7 +355,7 @@ hotkey_text = "[R]"
 [node name="Slot9" parent="BottomHUD/CenterCluster/SpellBar" instance=ExtResource("7_slot")]
 layout_mode = 2
 slot_index = 9
-hotkey_text = "[C]"
+hotkey_text = "[9/F]"
 
 [node name="RightCluster" type="VBoxContainer" parent="BottomHUD"]
 layout_mode = 1
@@ -394,6 +395,14 @@ custom_minimum_size = Vector2(92, 24)
 layout_mode = 2
 theme_override_font_sizes/font_size = 10
 text = "[G] Grimorio"
+icon = ExtResource("22_book")
+expand_icon = true
+
+[node name="BtnCraftToggle" type="Button" parent="BottomHUD/RightCluster/NavRow"]
+custom_minimum_size = Vector2(80, 24)
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "[C] Taller"
 icon = ExtResource("22_book")
 expand_icon = true
 
@@ -650,6 +659,15 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="GrimoireModal" parent="." instance=ExtResource("27_grim")]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CraftingModal" parent="." instance=ExtResource("28_craft")]
 visible = false
 layout_mode = 3
 anchors_preset = 15

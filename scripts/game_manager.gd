@@ -5,6 +5,7 @@ enum GameMode { SURVIVAL, EXPLORATION, OBJECTIVE }
 const InventoryManager = preload("res://scripts/inventory/inventory_manager.gd")
 const ItemDB = preload("res://scripts/inventory/item_db.gd")
 const FogOfWar = preload("res://scripts/fog/fog_of_war.gd")
+const CraftingManager = preload("res://scripts/crafting/crafting_manager.gd")
 
 signal reagents_updated
 signal shrines_updated
@@ -49,8 +50,9 @@ var active_objective: String = ""
 var active_objective_pos: Vector3 = Vector3.ZERO
 var fog_of_war: FogOfWar = null
 
-# Inventory System (Session Persistent)
+# Inventory & Crafting System (Session Persistent)
 var inventory: InventoryManager = null
+var crafting: CraftingManager = null
 
 # Reagents compatibility dictionary (Magic & Mayhem alchemy)
 var reagents: Dictionary = {
@@ -239,6 +241,8 @@ func _ready() -> void:
 		inventory = InventoryManager.new()
 		inventory.inventory_updated.connect(_on_inventory_updated)
 		inventory.item_added.connect(_on_item_added)
+	if not crafting:
+		crafting = CraftingManager.new()
 	reset_for_new_game(current_mode)
 	_game_initialized = true
 
@@ -350,6 +354,9 @@ func reset_for_new_game(mode: GameMode) -> void:
 		inventory.item_added.connect(_on_item_added)
 	else:
 		inventory.clear()
+	
+	if not crafting:
+		crafting = CraftingManager.new()
 	
 	# Starter items for smooth initial onboarding
 	inventory.add_item("potion_health", 2)

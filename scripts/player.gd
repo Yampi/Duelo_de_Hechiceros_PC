@@ -73,6 +73,14 @@ var mana_regen_pause_timer: float = 0.0
 
 var active_shield: Node3D = null
 
+# Active consumable buffs & equipment relics
+var regen_hp_timer: float = 0.0
+var regen_hp_rate: float = 0.0
+var regen_mp_timer: float = 0.0
+var regen_mp_rate: float = 0.0
+var invulnerability_timer: float = 0.0
+var equipped_relics: Array[String] = []
+
 func _ready() -> void:
 	add_to_group("player")
 	floor_snap_length = 0.35
@@ -141,7 +149,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			select_spell_slot(9)
 		elif event.keycode == KEY_SPACE:
 			cast_teleport()
-		elif event.keycode == KEY_C or event.keycode == KEY_F:
+		elif event.keycode == KEY_F:
 			cast_arcane_shield()
 		elif event.keycode == KEY_R:
 			cast_lightning_bolt()
@@ -225,6 +233,15 @@ func interact_nearest() -> void:
 				min_dist = d
 				closest_interactable = tree
 	
+	# 4. Comprobar nodos de recolección en el mundo (GatheringNode)
+	for gnode in get_tree().get_nodes_in_group("gathering_node"):
+		if is_instance_valid(gnode) and gnode.has_method("gather") and gnode.get("can_gather"):
+			var d = global_position.distance_to(gnode.global_position)
+			var p_range = gnode.prompt_range if "prompt_range" in gnode else 4.0
+			if d <= p_range and d < min_dist:
+				min_dist = d
+				closest_interactable = gnode
+	
 	if closest_interactable:
 		if closest_interactable.has_method("_attempt_pickup"):
 			closest_interactable._attempt_pickup(self)
@@ -232,6 +249,8 @@ func interact_nearest() -> void:
 			closest_interactable.interact(self)
 		elif closest_interactable.has_method("harvest"):
 			closest_interactable.harvest()
+		elif closest_interactable.has_method("gather"):
+			closest_interactable.gather(self)
 		get_viewport().set_input_as_handled()
 
 func select_spell_slot(slot: int) -> void:
@@ -350,6 +369,17 @@ func _physics_process(delta: float) -> void:
 		mana_regen_pause_timer = max(0.0, mana_regen_pause_timer - delta)
 	else:
 		GameManager.player_mana = min(GameManager.player_max_mana, GameManager.player_mana + (GameManager.mana_regen_rate * delta))
+	
+	# Active consumable regeneration and buffs
+	if regen_hp_timer > 0.0:
+		regen_hp_timer -= delta
+		GameManager.player_health = min(GameManager.player_max_health, GameManager.player_health + (regen_hp_rate * delta))
+	if regen_mp_timer > 0.0:
+		regen_mp_timer -= delta
+		GameManager.player_mana = min(GameManager.player_max_mana, GameManager.player_mana + (regen_mp_rate * delta))
+	if invulnerability_timer > 0.0:
+		invulnerability_timer -= delta
+
 	mana_updated.emit(GameManager.player_mana, GameManager.player_max_mana)
 	health_updated.emit(GameManager.player_health, GameManager.player_max_health)
 	
@@ -779,8 +809,55 @@ func _pulse_staff(color: Color, duration: float = 0.3) -> void:
 	if staff_light:
 		staff_light.light_color = color
 
+func apply_regen_buff(type: String, rate: float, duration: float) -> void:
+	if type == "hp":
+		regen_hp_rate = max(regen_hp_rate, rate)
+		regen_hp_timer = max(regen_hp_timer, duration)
+	elif type == "mp":
+		regen_mp_rate = max(regen_mp_rate, rate)
+		regen_mp_timer = max(regen_mp_timer, duration)
+
+func apply_invulnerability_buff(duration: float) -> void:
+	invulnerability_timer = max(invulnerability_timer, duration)
+	_pulse_staff(Color(1.0, 0.85, 0.2), duration)
+
+func apply_banquet_buff(rate: float, duration: float) -> void:
+	apply_regen_buff("hp", rate, duration)
+	apply_regen_buff("mp", rate, duration)
+	apply_haste_buff(duration)
+
+func toggle_equip_relic(relic_id: String) -> void:
+	if relic_id in equipped_relics:
+		equipped_relics.erase(relic_id)
+		GameManager.spawn_damage_number(global_position + Vector3(0, 1.2, 0), "Desequipado: " + relic_id, Color(0.7, 0.7, 0.7), 1.0)
+		if relic_id == "amulet_vitality":
+			GameManager.player_max_health = max(100.0, GameManager.player_max_health - 50.0)
+			GameManager.player_health = min(GameManager.player_health, GameManager.player_max_health)
+		elif relic_id == "ring_mana_flow":
+			GameManager.player_max_mana = max(100.0, GameManager.player_max_mana - 40.0)
+			GameManager.player_mana = min(GameManager.player_mana, GameManager.player_max_mana)
+		elif relic_id == "talisman_swiftness":
+			move_speed /= 1.20
+	else:
+		equipped_relics.append(relic_id)
+		GameManager.spawn_damage_number(global_position + Vector3(0, 1.2, 0), "💍 Equipado: " + relic_id, Color(0.9, 0.8, 0.3), 1.2)
+		if relic_id == "amulet_vitality":
+			GameManager.player_max_health += 50.0
+			GameManager.player_health += 50.0
+		elif relic_id == "ring_mana_flow":
+			GameManager.player_max_mana += 40.0
+			GameManager.player_mana += 40.0
+		elif relic_id == "talisman_swiftness":
+			move_speed *= 1.20
+	health_updated.emit(GameManager.player_health, GameManager.player_max_health)
+	mana_updated.emit(GameManager.player_mana, GameManager.player_max_mana)
+
 func take_damage(amount: float) -> void:
 	if is_dead or hurt_cooldown > 0.0:
+		return
+	
+	if invulnerability_timer > 0.0:
+		GameManager.spawn_damage_number(global_position + Vector3(0, 1.2, 0), "🛡️ ¡INMUNE!", Color(1.0, 0.85, 0.2), 1.0)
 		return
 	
 	if active_shield and is_instance_valid(active_shield):
