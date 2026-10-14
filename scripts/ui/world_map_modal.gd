@@ -184,9 +184,6 @@ func toggle_map() -> void:
 		open_map()
 
 func open_map() -> void:
-	if _is_animating:
-		return
-	
 	visible = true
 	_is_animating = true
 	
@@ -213,18 +210,8 @@ func open_map() -> void:
 		map_canvas.queue_redraw()
 
 func close_map() -> void:
-	if _is_animating or not visible:
-		return
-	
-	_is_animating = true
-	var tween = create_tween().set_parallel(true)
-	tween.tween_property(dim_overlay, "modulate:a", 0.0, 0.16).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	tween.tween_property(panel, "scale", Vector2(0.94, 0.94), 0.16).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	tween.tween_property(panel, "modulate:a", 0.0, 0.14).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	tween.chain().tween_callback(func():
-		visible = false
-		_is_animating = false
-	)
+	visible = false
+	_is_animating = false
 	
 	var am = get_node_or_null("/root/AudioManager")
 	if am and am.has_method("play_ui"):

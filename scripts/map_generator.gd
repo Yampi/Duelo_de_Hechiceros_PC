@@ -13,17 +13,25 @@ var world_item_scene: PackedScene = preload("res://scenes/WorldItem.tscn")
 var ancient_altar_scene: PackedScene = preload("res://scenes/AncientAltar.tscn")
 var health_fountain_scene: PackedScene = preload("res://scenes/HealthFountain.tscn")
 var fruit_tree_scene: PackedScene = preload("res://scenes/FruitTree.tscn")
+var oracle_monolith_scene: PackedScene = preload("res://scenes/OracleMonolith.tscn")
+var rival_wizard_scene: PackedScene = preload("res://scenes/RivalWizard.tscn")
 
 var tree_common1_scene: PackedScene = preload("res://assets/environment/CommonTree_1.gltf")
 var tree_common2_scene: PackedScene = preload("res://assets/environment/CommonTree_2.gltf")
 var tree_pine1_scene: PackedScene = preload("res://assets/environment/Pine_1.gltf")
 var tree_pine2_scene: PackedScene = preload("res://assets/environment/Pine_2.gltf")
 var tree_twisted_scene: PackedScene = preload("res://assets/environment/TwistedTree_1.gltf")
+var tree_twisted2_scene: PackedScene = preload("res://assets/environment/TwistedTree_2.gltf")
+var tree_twisted3_scene: PackedScene = preload("res://assets/environment/TwistedTree_3.gltf")
+var tree_birch1_scene: PackedScene = preload("res://assets/environment/BirchTree_1.glb")
+var tree_birch2_scene: PackedScene = preload("res://assets/environment/BirchTree_2.glb")
 var bush_scene: PackedScene = preload("res://assets/environment/Bush_Common.gltf")
+var bush_flowers_scene: PackedScene = preload("res://assets/environment/Bush_Common_Flowers.gltf")
 var rock_m1_scene: PackedScene = preload("res://assets/environment/Rock_Medium_1.gltf")
 var rock_m2_scene: PackedScene = preload("res://assets/environment/Rock_Medium_2.gltf")
 var rock_m3_scene: PackedScene = preload("res://assets/environment/Rock_Medium_3.gltf")
 var plant_big_scene: PackedScene = preload("res://assets/environment/Plant_1_Big.gltf")
+var plant_fern_scene: PackedScene = preload("res://assets/environment/Plant_7_Big.gltf")
 var grass_scene: PackedScene = preload("res://assets/environment/Grass_Large.glb")
 var column_scene: PackedScene = preload("res://assets/environment/Column_Round.glb")
 var arch_scene: PackedScene = preload("res://assets/environment/Arch_Round_RoundColumn.glb")
@@ -36,8 +44,11 @@ var flower_scene: PackedScene = preload("res://assets/environment/Flower_3_Group
 var clover_scene: PackedScene = preload("res://assets/environment/Clover_1.gltf")
 
 var grass_material: Material = preload("res://assets/materials/mat_grass.tres")
+var foliage_grass_mat: Material = preload("res://assets/materials/mat_foliage_grass.tres")
 var stone_material: Material = preload("res://assets/materials/mat_stone.tres")
 var rock_material: Material = preload("res://assets/materials/mat_rock.tres")
+var terrain_material: Material = preload("res://assets/materials/mat_terrain.tres")
+var terrain_mesh_instance: MeshInstance3D = null
 
 var shrine_positions: Array[Vector3] = []
 var player_spawn_point: Vector3 = MapConfig.PLAYER_SPAWN_POS
@@ -71,16 +82,16 @@ func _create_ground() -> void:
 	var ground = StaticBody3D.new()
 	ground.name = "Ground"
 	
-	# Child 0: Baseline BoxShape3D to satisfy foundation and test requirements
+	# Child 0: Baseline BoxShape3D to satisfy foundation and test requirements (catch plane below terrain)
 	var col_shape = CollisionShape3D.new()
 	var box = BoxShape3D.new()
 	box.size = Vector3(MapConfig.MAP_SIZE, 1.0, MapConfig.MAP_SIZE)
 	col_shape.shape = box
-	col_shape.position = Vector3(0, -0.5, 0)
+	col_shape.position = Vector3(0, -5.0, 0)
 	ground.add_child(col_shape)
 	
 	# Child 1 & 2: Generate 3D Topographical Terrain Mesh with synchronized Trimesh Collision
-	var res = 64 # 64x64 resolution across 256m = 4m grid intervals
+	var res = 192 # 192x192 resolution across 256m = 1.33m grid intervals for smooth slopes
 	var half = MapConfig.HALF_SIZE
 	var step = MapConfig.MAP_SIZE / float(res)
 	
@@ -128,11 +139,13 @@ func _create_ground() -> void:
 	surface_tool.generate_normals()
 	var terrain_mesh = surface_tool.commit()
 	
-	# Visual terrain mesh instance
+	# Visual terrain mesh instance with multi-biome procedural PBR shader
 	var mesh_inst = MeshInstance3D.new()
+	mesh_inst.name = "TerrainMesh"
 	mesh_inst.mesh = terrain_mesh
-	mesh_inst.material_override = grass_material
+	mesh_inst.material_override = terrain_material
 	ground.add_child(mesh_inst)
+	terrain_mesh_instance = mesh_inst
 	
 	# Child 2: Synchronized Trimesh concave collider matching the topography 1:1
 	var topo_shape = terrain_mesh.create_trimesh_shape()
@@ -142,6 +155,13 @@ func _create_ground() -> void:
 		ground.add_child(topo_col)
 	
 	add_child(ground)
+
+func update_terrain_fog(p_pos: Vector3, fog_tex: Texture2D) -> void:
+	if terrain_mesh_instance and terrain_mesh_instance.material_override is ShaderMaterial:
+		var sm = terrain_mesh_instance.material_override as ShaderMaterial
+		sm.set_shader_parameter("player_pos", p_pos)
+		if fog_tex:
+			sm.set_shader_parameter("fog_texture", fog_tex)
 
 func _create_boundaries() -> void:
 	var half = MapConfig.HALF_SIZE
@@ -196,6 +216,7 @@ func _create_perimeter_barriers() -> void:
 		var r_scale = randf_range(1.6, 2.4)
 		rock_node.scale = Vector3(r_scale, r_scale * 1.5, r_scale)
 		_apply_visibility_cull(rock_node, 95.0)
+		_apply_foliage_material(rock_node, rock_material)
 		add_child(rock_node)
 		var rx = pt.x + randf_range(-1.5, 1.5)
 		var rz = pt.z + randf_range(-1.5, 1.5)
@@ -222,67 +243,120 @@ func _build_road_network() -> void:
 		Vector3(0, 0, -28), Vector3(0, 0, -46), Vector3(0, 0, -64), Vector3(0, 0, -82),
 		Vector3(0, 0, -98)
 	]
-	_render_continuous_path(main_pts, 3.4)
-	
-	# Eastern Detour in Zone 2: Branches at Z = 46 to Eastern Clearing at (38, 0, 32)
-	var east_detour: Array[Vector3] = [
-		Vector3(-4, 0, 46), Vector3(10, 0, 42), Vector3(24, 0, 36), Vector3(38, 0, 32)
-	]
-	_render_continuous_path(east_detour, 2.2)
-	
-	# Western Detour in Zone 3: Flanking route around the gorge
-	var west_detour: Array[Vector3] = [
-		Vector3(0, 0, -10), Vector3(-18, 0, -16), Vector3(-34, 0, -24),
-		Vector3(-42, 0, -32), Vector3(-32, 0, -44), Vector3(-16, 0, -54),
-		Vector3(0, 0, -64)
-	]
-	_render_continuous_path(west_detour, 2.2)
+	_render_ancient_roadside_stones(main_pts)
 
-func _render_continuous_path(points: Array[Vector3], width: float) -> void:
+func _render_ancient_roadside_stones(points: Array[Vector3]) -> void:
+	# El sendero de tierra batida y gravilla se renderiza de forma continua en el shader de terreno.
+	# Aquí distribuimos losas de piedra ancestral parcialmente enterradas y piedras guía a los márgenes.
 	for i in range(points.size() - 1):
 		var p_start = points[i]
 		var p_end = points[i + 1]
 		var dist = p_start.distance_to(p_end)
-		var segments = max(1, int(dist / 2.2))
+		var step_count = max(1, int(dist / 4.8))
 		
-		for s in range(segments):
-			var t = float(s) / float(segments)
+		for s in range(step_count):
+			var t = float(s) / float(step_count)
 			var pos = p_start.lerp(p_end, t)
-			var pos_x = pos.x + randf_range(-0.25, 0.25)
-			var pos_z = pos.z + randf_range(-0.25, 0.25)
-			var pos_y = MapConfig.get_height_at(pos_x, pos_z)
 			
-			var slab = MeshInstance3D.new()
-			var cyl = CylinderMesh.new()
-			cyl.top_radius = (width * 0.5) * randf_range(0.85, 1.15)
-			cyl.bottom_radius = cyl.top_radius
-			cyl.height = 0.04
-			slab.mesh = cyl
-			slab.material_override = stone_material
-			slab.position = Vector3(pos_x, pos_y + 0.02, pos_z)
-			slab.rotation.y = randf() * TAU
-			add_child(slab)
+			# En Zona 4 o cerca de ruinas, losas más densas; en pradera, losas desgastadas dispersas
+			if abs(pos.z - 96.0) > 5.5 and randf() < (0.85 if pos.z < -64.0 else 0.40):
+				var px = pos.x + randf_range(-0.5, 0.5)
+				var pz = pos.z + randf_range(-0.4, 0.4)
+				var py = MapConfig.get_height_at(px, pz)
+				
+				var stone_slab = (rock_m1_scene if randf() < 0.5 else rock_m2_scene).instantiate()
+				var s_scale = randf_range(0.85, 1.20)
+				stone_slab.scale = Vector3(s_scale, 0.04, s_scale * 0.85) # Aplanada como losa de camino
+				stone_slab.rotation.y = randf() * TAU
+				_apply_visibility_cull(stone_slab, 75.0)
+				_apply_foliage_material(stone_slab, rock_material)
+				add_child(stone_slab)
+				# Enterrada en el suelo para que solo asome la cara superior pulida
+				stone_slab.global_position = Vector3(px, py - 0.085, pz)
+			
+			# Hitos y piedras musgosas en los márgenes de las curvas (distancia 2.5m - 3.8m del eje)
+			if randf() < 0.28:
+				var side_dir = -1.0 if randf() < 0.5 else 1.0
+				var bx = pos.x + side_dir * randf_range(2.6, 3.8)
+				var bz = pos.z + randf_range(-1.2, 1.2)
+				var by = MapConfig.get_height_at(bx, bz)
+				_spawn_rock_at(Vector3(bx, by, bz), randf_range(0.65, 1.1))
+				
+				# Trébol o helecho al pie de la piedra
+				if randf() < 0.65:
+					var cl = clover_scene.instantiate()
+					cl.scale = Vector3(1.1, 1.1, 1.1)
+					_apply_visibility_cull(cl, 45.0)
+					add_child(cl)
+					cl.global_position = Vector3(bx + randf_range(-0.4, 0.4), by, bz + randf_range(-0.4, 0.4))
 
 # === ZONA 1: PRADERA INICIAL (Z = 64 to 128) ===
 func _build_zone1_pradera() -> void:
-	# Welcome plaza around player spawn
-	var welcome_pos = Vector3(0, MapConfig.get_height_at(0, 96), 96)
-	var circle_mesh = MeshInstance3D.new()
-	var cyl = CylinderMesh.new()
-	cyl.top_radius = 5.5
-	cyl.bottom_radius = 5.5
-	cyl.height = 0.06
-	circle_mesh.mesh = cyl
-	circle_mesh.material_override = stone_material
-	circle_mesh.position = welcome_pos + Vector3(0, 0.02, 0)
-	add_child(circle_mesh)
+	# Weathered roadside milestone stone along left path shoulder (open natural vista ahead)
+	var stone_m = rock_m1_scene.instantiate()
+	var sm_scale = 0.85
+	stone_m.scale = Vector3(sm_scale, sm_scale * 0.7, sm_scale)
+	stone_m.rotation.y = 0.4
+	_apply_visibility_cull(stone_m, 75.0)
+	_apply_foliage_material(stone_m, rock_material)
+	add_child(stone_m)
+	var sm_pos = Vector3(-4.8, MapConfig.get_height_at(-4.8, 89.0) - 0.1, 89.0)
+	stone_m.global_position = sm_pos
 	
-	# Health Fountain in the meadow
+	var cl_m = clover_scene.instantiate()
+	cl_m.scale = Vector3(1.2, 1.2, 1.2)
+	_apply_visibility_cull(cl_m, 45.0)
+	add_child(cl_m)
+	cl_m.global_position = sm_pos + Vector3(0.3, 0.1, -0.2)
+
+	# Left Foreground Framing: Imposing ancient twisted tree with mossy rock & ferns
+	var left_frame_pos = Vector3(-7.5, MapConfig.get_height_at(-7.5, 84.0), 84.0)
+	var frame_tree = tree_twisted_scene.instantiate()
+	frame_tree.scale = Vector3(1.4, 1.4, 1.4)
+	frame_tree.rotation.y = 0.85
+	_apply_visibility_cull(frame_tree, 110.0)
+	add_child(frame_tree)
+	frame_tree.global_position = left_frame_pos
+	
+	# Root obstacle collider for framing tree
+	var ft_body = StaticBody3D.new()
+	ft_body.add_to_group("obstacle")
+	var ft_col = CollisionShape3D.new()
+	var ft_cyl = CylinderShape3D.new()
+	ft_cyl.radius = 0.8
+	ft_cyl.height = 5.0
+	ft_col.shape = ft_cyl
+	ft_col.position = left_frame_pos + Vector3(0, 2.5, 0)
+	ft_body.add_child(ft_col)
+	add_child(ft_body)
+	
+	# Mossy rock and ferns sheltered beneath the framing tree (fern keeps native alpha texture)
+	_spawn_rock_at(left_frame_pos + Vector3(1.2, 0, 0.3), 1.25)
+	var ft_fern = plant_fern_scene.instantiate()
+	ft_fern.scale = Vector3(1.2, 1.2, 1.2)
+	_apply_visibility_cull(ft_fern, 55.0)
+	add_child(ft_fern)
+	ft_fern.global_position = left_frame_pos + Vector3(0.5, 0, -1.0)
+	ft_fern.global_position.y = MapConfig.get_height_at(ft_fern.global_position.x, ft_fern.global_position.z)
+	ft_fern.global_position.y = MapConfig.get_height_at(ft_fern.global_position.x, ft_fern.global_position.z)
+
+	# Right Foreground Framing: Weathered roadside boulder & flower bush
+	var right_frame_pos = Vector3(7.2, MapConfig.get_height_at(7.2, 82.0), 82.0)
+	_spawn_rock_at(right_frame_pos, 1.5)
+	var right_bush = bush_flowers_scene.instantiate()
+	right_bush.scale = Vector3(1.3, 1.3, 1.3)
+	right_bush.rotation.y = 1.2
+	_apply_visibility_cull(right_bush, 65.0)
+	add_child(right_bush)
+	right_bush.global_position = right_frame_pos + Vector3(-0.8, 0, -0.6)
+	right_bush.global_position.y = MapConfig.get_height_at(right_bush.global_position.x, right_bush.global_position.z)
+
+	# Health Fountain nestled organically in the meadow glade
 	var fountain = health_fountain_scene.instantiate()
 	add_child(fountain)
 	fountain.global_position = Vector3(16.0, MapConfig.get_height_at(16.0, 92.0), 92.0)
 	
-	# Fruit trees
+	# Fruit trees placed with negative space for exploration
 	var ft1 = fruit_tree_scene.instantiate()
 	add_child(ft1)
 	ft1.global_position = Vector3(-18.0, MapConfig.get_height_at(-18.0, 86.0), 86.0)
@@ -291,35 +365,103 @@ func _build_zone1_pradera() -> void:
 	add_child(ft2)
 	ft2.global_position = Vector3(20.0, MapConfig.get_height_at(20.0, 74.0), 74.0)
 	
-	# Wooden chest near flowers
+	# Wooden chest near ancient stones
 	var chest = chest_scene.instantiate()
 	add_child(chest)
 	chest.global_position = Vector3(-24.0, MapConfig.get_height_at(-24.0, 102.0), 102.0)
 	chest.scale = Vector3(1.2, 1.2, 1.2)
 	
-	# Gentle tree groves flanking the field
-	_spawn_tree_grove(Vector3(-34, 0, 90), 6, "common")
-	_spawn_tree_grove(Vector3(34, 0, 90), 6, "common")
-	_spawn_tree_grove(Vector3(-28, 0, 110), 5, "common")
-	_spawn_tree_grove(Vector3(28, 0, 110), 5, "common")
+	# Layered tree groves flanking the field and framing the horizon into Zone 2
+	_spawn_tree_grove(Vector3(-22, 0, 78), 6, "twisted")
+	_spawn_tree_grove(Vector3(22, 0, 78), 6, "pine")
+	_spawn_tree_grove(Vector3(-34, 0, 94), 5, "common")
+	_spawn_tree_grove(Vector3(34, 0, 94), 5, "common")
+	_spawn_tree_grove(Vector3(-28, 0, 112), 5, "pine")
+	_spawn_tree_grove(Vector3(28, 0, 112), 5, "pine")
 	
-	# Flowers, clovers and mushrooms
-	for i in range(25):
+	# Roadside earthen berm vegetation colonies (natural ground-cover along path shoulders)
+	var road_z_samples = [90.0, 84.0, 78.0, 72.0, 66.0]
+	for rz in road_z_samples:
+		for side in [-1.0, 1.0]:
+			var rx = side * randf_range(3.6, 5.4)
+			var ry = MapConfig.get_height_at(rx, rz)
+			
+			# Grass colony with natural ground-cover scale
+			var gr = grass_scene.instantiate()
+			var gs = randf_range(0.75, 1.05)
+			gr.scale = Vector3(gs, gs, gs)
+			gr.rotation.y = randf() * TAU
+			_apply_visibility_cull(gr, 60.0)
+			_apply_foliage_material(gr, foliage_grass_mat)
+			add_child(gr)
+			gr.global_position = Vector3(rx, ry, rz)
+			
+			# Wildflowers or clovers along shoulders with realistic petite scale
+			if randf() < 0.65:
+				var is_flower = randf() < 0.5
+				var fl = flower_scene.instantiate() if is_flower else clover_scene.instantiate()
+				var fs = randf_range(0.38, 0.52) if is_flower else randf_range(0.60, 0.85)
+				fl.scale = Vector3(fs, fs, fs)
+				_apply_visibility_cull(fl, 50.0)
+				add_child(fl)
+				fl.global_position = Vector3(rx + randf_range(-0.6, 0.6), ry, rz + randf_range(-0.6, 0.6))
+	
+	# Meadow wildflowers and mushroom patches in open glades
+	for i in range(24):
 		var fx = randf_range(-38.0, 38.0)
 		var fz = randf_range(68.0, 120.0)
-		if abs(fx) < 3.5 and abs(fz - 96.0) < 14.0:
+		if abs(fx) < 3.2 or (abs(fx) < 6.5 and abs(fz - 96.0) < 12.0):
 			continue
 		var fy = MapConfig.get_height_at(fx, fz)
 		var f_pos = Vector3(fx, fy, fz)
-		var fl = flower_scene.instantiate() if i % 2 == 0 else clover_scene.instantiate()
-		fl.scale = Vector3(1.3, 1.3, 1.3)
+		var is_flower_m = (i % 2 == 0)
+		var fl = (flower_scene if is_flower_m else clover_scene).instantiate()
+		var fs_m = randf_range(0.38, 0.55) if is_flower_m else randf_range(0.60, 0.85)
+		fl.scale = Vector3(fs_m, fs_m, fs_m)
 		_apply_visibility_cull(fl, 50.0)
 		add_child(fl)
 		fl.global_position = f_pos
 	
+	# Tufts of lush grass across the meadow slopes
+	for i in range(36):
+		var gx = randf_range(-42.0, 42.0)
+		var gz = randf_range(66.0, 122.0)
+		if abs(gx) < 3.2 or (abs(gx) < 6.0 and abs(gz - 96.0) < 10.0):
+			continue
+		var gy = MapConfig.get_height_at(gx, gz)
+		var gr = grass_scene.instantiate()
+		var g_scale = randf_range(0.75, 1.15)
+		gr.scale = Vector3(g_scale, g_scale, g_scale)
+		gr.rotation.y = randf() * TAU
+		_apply_visibility_cull(gr, 58.0)
+		_apply_foliage_material(gr, foliage_grass_mat)
+		add_child(gr)
+		gr.global_position = Vector3(gx, gy, gz)
+	
+	# Bushes with flowers flanking tree groves
+	for i in range(16):
+		var bx = randf_range(-38.0, 38.0)
+		var bz = randf_range(68.0, 120.0)
+		if abs(bx) < 4.0:
+			continue
+		var by = MapConfig.get_height_at(bx, bz)
+		var b_node = (bush_flowers_scene if i % 2 == 0 else bush_scene).instantiate()
+		var b_scale = randf_range(1.1, 1.45)
+		b_node.scale = Vector3(b_scale, b_scale, b_scale)
+		b_node.rotation.y = randf() * TAU
+		_apply_visibility_cull(b_node, 65.0)
+		add_child(b_node)
+		b_node.global_position = Vector3(bx, by, bz)
+	
 	# Ancient standing boundary stones framing the road into the forest (Z = 64)
-	_spawn_rock_at(Vector3(-5.5, MapConfig.get_height_at(-5.5, 64.0), 64.0), 1.8)
-	_spawn_rock_at(Vector3(5.5, MapConfig.get_height_at(5.5, 64.0), 64.0), 1.8)
+	_spawn_rock_at(Vector3(-5.5, MapConfig.get_height_at(-5.5, 64.0), 64.0), 1.9)
+	_spawn_rock_at(Vector3(5.5, MapConfig.get_height_at(5.5, 64.0), 64.0), 1.9)
+	
+	# Lore Oracle Monolith 1 (Lucian's Journal 1)
+	var o1 = oracle_monolith_scene.instantiate()
+	add_child(o1)
+	o1.lore_id = "lucian_journal_1"
+	o1.global_position = Vector3(8.0, MapConfig.get_height_at(8.0, 84.0), 84.0)
 
 # === ZONA 2: BOSQUE EXTERIOR (Z = 0 to 64) ===
 func _build_zone2_bosque_exterior() -> void:
@@ -367,6 +509,42 @@ func _build_zone2_bosque_exterior() -> void:
 	# Gorge defile entrance rocks framing the descent (Z = 0)
 	_spawn_rock_at(Vector3(-6.2, MapConfig.get_height_at(-6.2, 0.0), 0.0), 2.0)
 	_spawn_rock_at(Vector3(6.2, MapConfig.get_height_at(6.2, 0.0), 0.0), 2.0)
+	
+	# Foliage: Understory plants, grass clumps and wild bushes
+	for i in range(35):
+		var gx = randf_range(-44.0, 44.0)
+		var gz = randf_range(6.0, 60.0)
+		if abs(gx) < 3.5:
+			continue
+		var gy = MapConfig.get_height_at(gx, gz)
+		var gr = grass_scene.instantiate()
+		var g_scale = randf_range(1.0, 1.5)
+		gr.scale = Vector3(g_scale, g_scale, g_scale)
+		gr.rotation.y = randf() * TAU
+		_apply_visibility_cull(gr, 55.0)
+		_apply_foliage_material(gr, foliage_grass_mat)
+		add_child(gr)
+		gr.global_position = Vector3(gx, gy, gz)
+	
+	for i in range(18):
+		var bx = randf_range(-42.0, 42.0)
+		var bz = randf_range(8.0, 58.0)
+		if abs(bx) < 3.8:
+			continue
+		var by = MapConfig.get_height_at(bx, bz)
+		var b_node = bush_scene.instantiate() if i % 2 == 0 else plant_big_scene.instantiate()
+		var b_scale = randf_range(0.9, 1.3)
+		b_node.scale = Vector3(b_scale, b_scale, b_scale)
+		b_node.rotation.y = randf() * TAU
+		_apply_visibility_cull(b_node, 60.0)
+		add_child(b_node)
+		b_node.global_position = Vector3(bx, by, bz)
+	
+	# Lore Oracle Monolith 2 (Avalon Whisper)
+	var o2 = oracle_monolith_scene.instantiate()
+	add_child(o2)
+	o2.lore_id = "oracle_avalon_whisper"
+	o2.global_position = Vector3(32.0, MapConfig.get_height_at(32.0, 36.0), 36.0)
 
 # === ZONA 3: CORAZÓN DEL BOSQUE (Z = -64 to 0) ===
 func _build_zone3_corazon_bosque() -> void:
@@ -418,9 +596,35 @@ func _build_zone3_corazon_bosque() -> void:
 		_apply_visibility_cull(mush, 50.0)
 		add_child(mush)
 		mush.global_position = Vector3(mx, my, mz)
+	
+	# Foliage: Wild undergrowth, ferns and deep gorge plants
+	for i in range(24):
+		var px = randf_range(-46.0, 46.0)
+		var pz = randf_range(-60.0, -4.0)
+		if abs(px) < 3.5:
+			continue
+		var py = MapConfig.get_height_at(px, pz)
+		var p_node = plant_big_scene.instantiate() if i % 2 == 0 else bush_scene.instantiate()
+		var p_scale = randf_range(1.0, 1.4)
+		p_node.scale = Vector3(p_scale, p_scale, p_scale)
+		p_node.rotation.y = randf() * TAU
+		_apply_visibility_cull(p_node, 55.0)
+		add_child(p_node)
+		p_node.global_position = Vector3(px, py, pz)
+	
+	# Lore Oracle Monolith 3 (Lucian's Journal 2)
+	var o3 = oracle_monolith_scene.instantiate()
+	add_child(o3)
+	o3.lore_id = "lucian_journal_2"
+	o3.global_position = Vector3(-14.0, MapConfig.get_height_at(-14.0, -24.0), -24.0)
 
 # === ZONA 4: RUINAS ARCANAS (Z = -128 to -64) ===
 func _build_zone4_ruinas_arcanas() -> void:
+	# Lore Oracle Monolith 4 (Ancient Monolith Ruins)
+	var o4 = oracle_monolith_scene.instantiate()
+	add_child(o4)
+	o4.lore_id = "ancient_monolith_ruins"
+	o4.global_position = Vector3(20.0, MapConfig.get_height_at(20.0, -74.0), -74.0)
 	# Grand plateau entrance archway (Z = -64) framing the ascent into the sacred precinct
 	_spawn_ruin_column(Vector3(-6.8, MapConfig.get_height_at(-6.8, -64.0), -64.0), true)
 	_spawn_ruin_column(Vector3(6.8, MapConfig.get_height_at(6.8, -64.0), -64.0), true)
@@ -540,26 +744,44 @@ func _spawn_ruin_column(pos: Vector3, with_torch: bool = false) -> void:
 
 func _spawn_tree_grove(center: Vector3, count: int, type_pref: String) -> void:
 	for i in range(count):
-		var offset = Vector3(randf_range(-7.0, 7.0), 0, randf_range(-7.0, 7.0))
+		var offset = Vector3(randf_range(-7.5, 7.5), 0, randf_range(-7.5, 7.5))
 		var tree_pos = center + offset
 		tree_pos.y = MapConfig.get_height_at(tree_pos.x, tree_pos.z)
 		var tree_node: Node3D = null
 		var col_radius = 0.5
+		var t_scale = 1.2
 		
 		if type_pref == "pine":
 			tree_node = tree_pine1_scene.instantiate() if i % 2 == 0 else tree_pine2_scene.instantiate()
-			tree_node.scale = Vector3(1.15, 1.15, 1.15)
-			col_radius = 0.45
+			t_scale = randf_range(1.2, 1.65)
+			tree_node.scale = Vector3(t_scale, t_scale, t_scale)
+			col_radius = 0.55 * (t_scale / 1.2)
 		elif type_pref == "twisted":
-			tree_node = tree_twisted_scene.instantiate()
-			tree_node.scale = Vector3(0.65, 0.65, 0.65)
-			col_radius = 0.7
+			var tw_roll = randi() % 3
+			if tw_roll == 0:
+				tree_node = tree_twisted_scene.instantiate()
+			elif tw_roll == 1:
+				tree_node = tree_twisted2_scene.instantiate()
+			else:
+				tree_node = tree_twisted3_scene.instantiate()
+			t_scale = randf_range(1.15, 1.45)
+			tree_node.scale = Vector3(t_scale, t_scale, t_scale)
+			col_radius = 0.75 * (t_scale / 1.2)
 		else:
-			tree_node = tree_common1_scene.instantiate() if i % 2 == 0 else tree_common2_scene.instantiate()
-			tree_node.scale = Vector3(1.05, 1.05, 1.05)
-			col_radius = 0.5
+			var cm_roll = randi() % 4
+			if cm_roll == 0:
+				tree_node = tree_common1_scene.instantiate()
+			elif cm_roll == 1:
+				tree_node = tree_common2_scene.instantiate()
+			elif cm_roll == 2:
+				tree_node = tree_birch1_scene.instantiate()
+			else:
+				tree_node = tree_birch2_scene.instantiate()
+			t_scale = randf_range(1.1, 1.4)
+			tree_node.scale = Vector3(t_scale, t_scale, t_scale)
+			col_radius = 0.55 * (t_scale / 1.2)
 		
-		_apply_visibility_cull(tree_node, 100.0)
+		_apply_visibility_cull(tree_node, 105.0)
 		add_child(tree_node)
 		tree_node.global_position = tree_pos
 		tree_node.rotation.y = randf() * TAU
@@ -569,11 +791,56 @@ func _spawn_tree_grove(center: Vector3, count: int, type_pref: String) -> void:
 		var col = CollisionShape3D.new()
 		var cyl = CylinderShape3D.new()
 		cyl.radius = col_radius
-		cyl.height = 4.5
+		cyl.height = 5.0 * (t_scale / 1.2)
 		col.shape = cyl
-		col.position = tree_pos + Vector3(0, 2.25, 0)
+		col.position = tree_pos + Vector3(0, 2.5 * (t_scale / 1.2), 0)
 		trunk_body.add_child(col)
 		add_child(trunk_body)
+		
+		# Root-level undergrowth integration (65% chance per tree)
+		if randf() < 0.65:
+			var u_roll = randf()
+			var u_offset = Vector3(randf_range(-1.2, 1.2), 0, randf_range(-1.2, 1.2))
+			var u_pos = tree_pos + u_offset
+			u_pos.y = MapConfig.get_height_at(u_pos.x, u_pos.z)
+			
+			if u_roll < 0.35:
+				# Mossy rock nestled into roots
+				var rock_under = (rock_m1_scene if randf() < 0.5 else rock_m2_scene).instantiate()
+				var rs = randf_range(0.65, 1.05)
+				rock_under.scale = Vector3(rs, rs * 0.7, rs)
+				rock_under.rotation.y = randf() * TAU
+				_apply_visibility_cull(rock_under, 75.0)
+				_apply_foliage_material(rock_under, rock_material)
+				add_child(rock_under)
+				rock_under.global_position = Vector3(u_pos.x, u_pos.y - 0.1, u_pos.z)
+			elif u_roll < 0.65:
+				# Fern at trunk base
+				var fern_under = plant_fern_scene.instantiate()
+				var fs = randf_range(0.95, 1.3)
+				fern_under.scale = Vector3(fs, fs, fs)
+				fern_under.rotation.y = randf() * TAU
+				_apply_visibility_cull(fern_under, 55.0)
+				add_child(fern_under)
+				fern_under.global_position = u_pos
+			elif u_roll < 0.82:
+				# Bush nestled beside trunk
+				var bush_under = (bush_flowers_scene if randf() < 0.5 else bush_scene).instantiate()
+				var bs = randf_range(0.85, 1.15)
+				bush_under.scale = Vector3(bs, bs, bs)
+				bush_under.rotation.y = randf() * TAU
+				_apply_visibility_cull(bush_under, 60.0)
+				add_child(bush_under)
+				bush_under.global_position = u_pos
+			else:
+				# Mushroom cluster feeding on tree roots
+				var mush_under = (mushroom_orange_scene if randf() < 0.5 else mushroom_scene).instantiate()
+				var ms = randf_range(1.1, 1.45)
+				mush_under.scale = Vector3(ms, ms, ms)
+				mush_under.rotation.y = randf() * TAU
+				_apply_visibility_cull(mush_under, 45.0)
+				add_child(mush_under)
+				mush_under.global_position = u_pos
 
 func _spawn_rock_at(pos: Vector3, r_scale: float) -> void:
 	pos.y = MapConfig.get_height_at(pos.x, pos.z)
@@ -588,6 +855,7 @@ func _spawn_rock_at(pos: Vector3, r_scale: float) -> void:
 	
 	rock_node.scale = Vector3(r_scale, r_scale, r_scale)
 	_apply_visibility_cull(rock_node, 95.0)
+	_apply_foliage_material(rock_node, rock_material)
 	add_child(rock_node)
 	rock_node.global_position = pos
 	rock_node.rotation.y = randf() * TAU
@@ -607,6 +875,12 @@ func _apply_visibility_cull(node: Node, max_dist: float) -> void:
 		node.visibility_range_end = max_dist
 	for child in node.get_children():
 		_apply_visibility_cull(child, max_dist)
+
+func _apply_foliage_material(node: Node, mat: Material) -> void:
+	if node is MeshInstance3D:
+		node.material_override = mat
+	for child in node.get_children():
+		_apply_foliage_material(child, mat)
 
 func _generate_pickups_and_reagents() -> void:
 	# Contextual World Item placements linked to POIs and exploration

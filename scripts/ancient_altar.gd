@@ -39,7 +39,7 @@ func _process(delta: float) -> void:
 				var hud = get_tree().root.find_child("HUD", true, false)
 				if hud and hud.has_method("create_interaction_prompt"):
 					var prompt_str = "Altar Activo" if is_activated else ("Activar Altar" if (GameManager.inventory and GameManager.inventory.has_item("arcane_crystal")) else "Requiere Cristal")
-					prompt_inst = hud.create_interaction_prompt(self, prompt_str, "F", 1.8)
+					prompt_inst = hud.create_interaction_prompt(self, prompt_str, "E", 1.8)
 		else:
 			if prompt_inst:
 				prompt_inst.dismiss()

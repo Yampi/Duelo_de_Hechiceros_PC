@@ -11,6 +11,7 @@ static var ui_volume: float = 0.90
 static var reduce_shake: bool = false
 static var reduce_flashes: bool = false
 static var show_control_hints: bool = true
+static var camera_mode: int = 0 # 0: 3D Libre (Tercera persona), 1: 2.5D Isométrica
 static var fullscreen: bool = false
 static var ui_scale: float = 1.0
 static var effects_quality: int = 2 # 0: Low, 1: Med, 2: High
@@ -40,6 +41,14 @@ static func apply_all() -> void:
 		if DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN:
 			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
 
+	# 3. Apply camera settings to active camera rigs
+	var main_loop = Engine.get_main_loop()
+	if main_loop and main_loop is SceneTree:
+		var scene_tree = main_loop as SceneTree
+		for cam in scene_tree.get_nodes_in_group("camera"):
+			if cam.has_method("apply_settings"):
+				cam.apply_settings()
+
 static func save_to_disk() -> void:
 	var cfg = ConfigFile.new()
 	cfg.set_value("audio", "master", master_volume)
@@ -54,6 +63,7 @@ static func save_to_disk() -> void:
 	cfg.set_value("gameplay", "reduce_shake", reduce_shake)
 	cfg.set_value("gameplay", "reduce_flashes", reduce_flashes)
 	cfg.set_value("gameplay", "show_control_hints", show_control_hints)
+	cfg.set_value("gameplay", "camera_mode", camera_mode)
 	
 	cfg.save(SAVE_PATH)
 	apply_all()
@@ -76,3 +86,4 @@ static func load_from_disk() -> void:
 	reduce_shake = cfg.get_value("gameplay", "reduce_shake", reduce_shake)
 	reduce_flashes = cfg.get_value("gameplay", "reduce_flashes", reduce_flashes)
 	show_control_hints = cfg.get_value("gameplay", "show_control_hints", show_control_hints)
+	camera_mode = cfg.get_value("gameplay", "camera_mode", camera_mode)

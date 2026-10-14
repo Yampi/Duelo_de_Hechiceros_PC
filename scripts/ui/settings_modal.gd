@@ -19,6 +19,7 @@ signal settings_closed
 @onready var lbl_ui: Label = find_child("LblUIVal", true, false)
 
 @onready var check_fullscreen: CheckBox = find_child("CheckFullscreen", true, false)
+@onready var check_isometric: CheckBox = find_child("CheckIsometric", true, false)
 @onready var check_shake: CheckBox = find_child("CheckShake", true, false)
 @onready var check_flashes: CheckBox = find_child("CheckFlashes", true, false)
 @onready var check_hints: CheckBox = find_child("CheckHints", true, false)
@@ -70,6 +71,11 @@ func _connect_signals() -> void:
 	
 	if check_fullscreen:
 		check_fullscreen.toggled.connect(func(t): SettingsManager.fullscreen = t; SettingsManager.apply_all())
+	if check_isometric:
+		check_isometric.toggled.connect(func(t):
+			SettingsManager.camera_mode = 1 if t else 0
+			SettingsManager.apply_all()
+		)
 	if check_shake:
 		check_shake.toggled.connect(func(t): SettingsManager.reduce_shake = t)
 	if check_flashes:
@@ -100,6 +106,7 @@ func _sync_ui_from_settings() -> void:
 		if lbl_scale: lbl_scale.text = "%d%%" % int(SettingsManager.ui_scale * 100)
 	
 	if check_fullscreen: check_fullscreen.button_pressed = SettingsManager.fullscreen
+	if check_isometric: check_isometric.button_pressed = (SettingsManager.camera_mode == 1)
 	if check_shake: check_shake.button_pressed = SettingsManager.reduce_shake
 	if check_flashes: check_flashes.button_pressed = SettingsManager.reduce_flashes
 	if check_hints: check_hints.button_pressed = SettingsManager.show_control_hints

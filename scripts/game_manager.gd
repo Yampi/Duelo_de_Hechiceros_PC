@@ -6,6 +6,7 @@ const InventoryManager = preload("res://scripts/inventory/inventory_manager.gd")
 const ItemDB = preload("res://scripts/inventory/item_db.gd")
 const FogOfWar = preload("res://scripts/fog/fog_of_war.gd")
 const CraftingManager = preload("res://scripts/crafting/crafting_manager.gd")
+const LoreManager = preload("res://scripts/lore/lore_manager.gd")
 
 signal reagents_updated
 signal shrines_updated
@@ -53,6 +54,7 @@ var fog_of_war: FogOfWar = null
 # Inventory & Crafting System (Session Persistent)
 var inventory: InventoryManager = null
 var crafting: CraftingManager = null
+var lore: LoreManager = null
 
 # Reagents compatibility dictionary (Magic & Mayhem alchemy)
 var reagents: Dictionary = {
@@ -243,6 +245,8 @@ func _ready() -> void:
 		inventory.item_added.connect(_on_item_added)
 	if not crafting:
 		crafting = CraftingManager.new()
+	if not lore:
+		lore = LoreManager.new()
 	reset_for_new_game(current_mode)
 	_game_initialized = true
 

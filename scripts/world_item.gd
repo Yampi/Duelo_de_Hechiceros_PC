@@ -99,7 +99,7 @@ func _process(delta: float) -> void:
 				if hud and hud.has_method("create_interaction_prompt"):
 					var def = ItemDB.get_item(item_id)
 					var item_name = def.name if def else item_id
-					prompt_inst = hud.create_interaction_prompt(self, "Recoger %s" % item_name, "F", 0.75)
+					prompt_inst = hud.create_interaction_prompt(self, "Recoger %s" % item_name, "E", 0.75)
 		else:
 			if prompt_inst:
 				prompt_inst.dismiss()

@@ -12,6 +12,12 @@ signal open_world_map_requested
 var player_ref: Node3D = null
 var is_hovered: bool = false
 
+# Capas desacopladas para renderizado estratificado con Fog of War
+var bg_layer: Control = null
+var fog_overlay: ColorRect = null
+var fg_layer: Control = null
+var fog_mat: ShaderMaterial = null
+
 # Road network cache (world points)
 var roads: Array[Array] = [
 	# Main Road
@@ -39,6 +45,37 @@ func _ready() -> void:
 	gui_input.connect(_on_gui_input)
 	mouse_entered.connect(func(): is_hovered = true)
 	mouse_exited.connect(func(): is_hovered = false)
+	
+	_setup_layers()
+
+func _setup_layers() -> void:
+	# 1. Capa inferior: Fondo, bioma y sendas del mundo
+	bg_layer = Control.new()
+	bg_layer.name = "BackgroundLayer"
+	bg_layer.set_anchors_preset(PRESET_FULL_RECT)
+	bg_layer.mouse_filter = MOUSE_FILTER_IGNORE
+	bg_layer.draw.connect(_draw_background)
+	add_child(bg_layer)
+	
+	# 2. Capa intermedia: Shader de Niebla de Guerra GPU (oculta sendas y zonas no exploradas)
+	fog_overlay = ColorRect.new()
+	fog_overlay.name = "FogOverlay"
+	fog_overlay.set_anchors_preset(PRESET_FULL_RECT)
+	fog_overlay.mouse_filter = MOUSE_FILTER_IGNORE
+	
+	var shader = preload("res://shaders/fog_minimap.gdshader")
+	fog_mat = ShaderMaterial.new()
+	fog_mat.shader = shader
+	fog_overlay.material = fog_mat
+	add_child(fog_overlay)
+	
+	# 3. Capa superior: Puntos de Interés visibles, enemigos en radar, héroe y marco dorado
+	fg_layer = Control.new()
+	fg_layer.name = "ForegroundLayer"
+	fg_layer.set_anchors_preset(PRESET_FULL_RECT)
+	fg_layer.mouse_filter = MOUSE_FILTER_IGNORE
+	fg_layer.draw.connect(_draw_foreground)
+	add_child(fg_layer)
 
 func set_player(player: Node3D) -> void:
 	player_ref = player
@@ -49,36 +86,46 @@ func _process(_delta: float) -> void:
 		if players.size() > 0:
 			player_ref = players[0]
 	
-	queue_redraw()
+	if fog_mat and player_ref and is_instance_valid(player_ref):
+		var p_pos = player_ref.global_position
+		fog_mat.set_shader_parameter("player_pos", Vector2(p_pos.x, p_pos.z))
+		fog_mat.set_shader_parameter("radar_radius", radar_radius_meters)
+		fog_mat.set_shader_parameter("reveal_radius", 20.0)
+		if GameManager.fog_of_war:
+			fog_mat.set_shader_parameter("fog_texture", GameManager.fog_of_war.get_fog_texture())
+	
+	if bg_layer:
+		bg_layer.queue_redraw()
+	if fg_layer:
+		fg_layer.queue_redraw()
 
 func _on_gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		open_world_map_requested.emit()
 
-func _draw() -> void:
+func _draw_background() -> void:
 	var center = size * 0.5
 	var radius = min(size.x, size.y) * 0.46
 	var scale_factor = radius / radar_radius_meters
 	
 	# Sombra suave exterior
-	draw_circle(center + Vector2(2, 2), radius + 2.0, Color(0, 0, 0, 0.4))
+	bg_layer.draw_circle(center + Vector2(2, 2), radius + 2.0, Color(0, 0, 0, 0.4))
 	
 	# Fondo circular de obsidiana
-	draw_circle(center, radius, UIConstants.BG_DARKER)
+	bg_layer.draw_circle(center, radius, UIConstants.BG_DARKER)
 	
 	if player_ref and is_instance_valid(player_ref):
 		var player_pos = player_ref.global_position
-		var player_rot = player_ref.rotation.y
 		
 		# Tinte de zona actual
 		var current_zone_id = MapConfig.get_zone_at_position(player_pos)
 		var zone_cfg = MapConfig.get_zone_data(current_zone_id)
 		var zone_tint = zone_cfg.get("color", Color.GREEN)
-		zone_tint.a = 0.14
-		draw_circle(center, radius - 2.0, zone_tint)
+		zone_tint.a = 0.16
+		bg_layer.draw_circle(center, radius - 2.0, zone_tint)
 		
-		# Dibujar sendas dentro del radar
-		var road_color = Color(0.65, 0.6, 0.5, 0.5)
+		# Dibujar sendas dentro del radar (la niebla de guerra las ocultará en zonas inexploradas)
+		var road_color = Color(0.72, 0.68, 0.58, 0.65)
 		for path in roads:
 			for i in range(path.size() - 1):
 				var p1 = path[i] as Vector3
@@ -86,11 +133,24 @@ func _draw() -> void:
 				var pt1_2d = center + _world_to_minimap_offset(p1 - player_pos, scale_factor)
 				var pt2_2d = center + _world_to_minimap_offset(p2 - player_pos, scale_factor)
 				if center.distance_to(pt1_2d) < radius or center.distance_to(pt2_2d) < radius:
-					draw_line(pt1_2d, pt2_2d, road_color, 2.0)
+					bg_layer.draw_line(pt1_2d, pt2_2d, road_color, 2.8)
+
+func _draw_foreground() -> void:
+	var center = size * 0.5
+	var radius = min(size.x, size.y) * 0.46
+	var scale_factor = radius / radar_radius_meters
+	
+	if player_ref and is_instance_valid(player_ref):
+		var player_pos = player_ref.global_position
+		var player_rot = player_ref.rotation.y
 		
 		# Dibujar POIs descubiertos con iconos de IconRegistry (nunca emojis)
 		for poi in GameManager.discovered_pois:
 			var p_pos = poi.get("pos", Vector3.ZERO) as Vector3
+			# Filtrar por Fog of War: si no está explorado, no mostrar
+			if GameManager.fog_of_war and not GameManager.fog_of_war.is_point_explored(p_pos):
+				continue
+				
 			var diff = p_pos - player_pos
 			var dist = Vector2(diff.x, diff.z).length()
 			var poi_id = poi.get("id", "")
@@ -99,39 +159,36 @@ func _draw() -> void:
 			var pt = center + _world_to_minimap_offset(diff, scale_factor)
 			
 			if dist <= radar_radius_meters:
-				draw_circle(pt, 7.0, Color(0.06, 0.08, 0.12, 0.9))
-				draw_circle(pt, 5.5, Color(0.2, 0.85, 1.0, 0.35))
+				fg_layer.draw_circle(pt, 7.0, Color(0.06, 0.08, 0.12, 0.92))
+				fg_layer.draw_circle(pt, 5.5, Color(0.2, 0.85, 1.0, 0.35))
 				if tex:
 					var icon_rect_2d = Rect2(pt - Vector2(7, 7), Vector2(14, 14))
-					draw_texture_rect(tex, icon_rect_2d, false)
+					fg_layer.draw_texture_rect(tex, icon_rect_2d, false)
 				else:
-					draw_circle(pt, 4.0, UIConstants.ARCANE_CYAN)
+					fg_layer.draw_circle(pt, 4.0, UIConstants.ARCANE_CYAN)
 			else:
 				# Fijar al borde
 				var rim_dir = (pt - center).normalized()
 				var rim_pt = center + rim_dir * (radius - 8.0)
-				draw_circle(rim_pt, 3.5, Color(0.2, 0.85, 1.0, 0.8))
+				fg_layer.draw_circle(rim_pt, 3.5, Color(0.2, 0.85, 1.0, 0.8))
 		
-		# Niebla de guerra en minimapa: arco sutil de alcance de visión (20m)
-		var reveal_px = 20.0 * scale_factor
-		draw_arc(center, reveal_px, 0, TAU, 32, Color(0.35, 0.85, 1.0, 0.4), 1.0)
-		
-		# Enemigos visibles filtrados por radio de niebla de guerra (20m)
+		# Enemigos visibles filtrados por Fog of War (solo dentro de visión activa)
 		for enemy in get_tree().get_nodes_in_group("enemy"):
 			if is_instance_valid(enemy) and enemy.is_inside_tree() and not enemy.get("is_dead"):
-				var e_diff = enemy.global_position - player_pos
-				var e_dist = Vector2(e_diff.x, e_diff.z).length()
-				if e_dist <= 20.0:
-					var is_vis = true
-					if GameManager.fog_of_war:
-						is_vis = GameManager.fog_of_war.is_point_visible(enemy.global_position)
-					if is_vis:
-						var e_pt = center + _world_to_minimap_offset(e_diff, scale_factor)
-						var is_boss = enemy.get("is_boss") == true
-						var dot_col = Color(1.0, 0.3, 0.85) if is_boss else UIConstants.DANGER_RED
-						var dot_radius = 5.0 if is_boss else 3.2
-						draw_circle(e_pt, dot_radius, dot_col)
-						draw_circle(e_pt, dot_radius * 0.5, Color(1, 1, 1, 0.9))
+				var is_vis = false
+				if GameManager.fog_of_war:
+					is_vis = GameManager.fog_of_war.is_point_visible(enemy.global_position)
+				else:
+					is_vis = enemy.global_position.distance_to(player_pos) <= 20.0
+					
+				if is_vis:
+					var e_diff = enemy.global_position - player_pos
+					var e_pt = center + _world_to_minimap_offset(e_diff, scale_factor)
+					var is_boss = enemy.get("is_boss") == true
+					var dot_col = Color(1.0, 0.3, 0.85) if is_boss else UIConstants.DANGER_RED
+					var dot_radius = 5.2 if is_boss else 3.4
+					fg_layer.draw_circle(e_pt, dot_radius, dot_col)
+					fg_layer.draw_circle(e_pt, dot_radius * 0.5, Color(1, 1, 1, 0.95))
 		
 		# Marcador de objetivo activo con pulso dinámico y flecha direccional
 		if GameManager.active_objective_pos != Vector3.ZERO:
@@ -142,10 +199,9 @@ func _draw() -> void:
 			var pulse_val = sin(Time.get_ticks_msec() * 0.006)
 			
 			if obj_dist <= radar_radius_meters:
-				draw_arc(pt, 6.0 + pulse_val * 2.0, 0, TAU, 20, obj_col, 2.0)
-				draw_circle(pt, 3.5, obj_col)
+				fg_layer.draw_arc(pt, 6.0 + pulse_val * 2.0, 0, TAU, 20, obj_col, 2.0)
+				fg_layer.draw_circle(pt, 3.5, obj_col)
 			else:
-				# Flecha direccional fijada al borde apuntando hacia el objetivo lejano
 				var rim_dir = (pt - center).normalized()
 				var rim_pt = center + rim_dir * (radius - 10.0)
 				_draw_directional_arrow(rim_pt, rim_dir, 6.0, obj_col)
@@ -156,21 +212,21 @@ func _draw() -> void:
 		var arrow_left = center + (heading_dir.rotated(2.4) * 6.5)
 		var arrow_right = center + (heading_dir.rotated(-2.4) * 6.5)
 		var points: PackedVector2Array = [arrow_tip, arrow_left, center, arrow_right]
-		draw_colored_polygon(points, UIConstants.ARCANE_CYAN)
-		draw_polyline(PackedVector2Array([arrow_tip, arrow_left, arrow_right, arrow_tip]), Color(1, 1, 1, 0.95), 1.4)
+		fg_layer.draw_colored_polygon(points, UIConstants.ARCANE_CYAN)
+		fg_layer.draw_polyline(PackedVector2Array([arrow_tip, arrow_left, arrow_right, arrow_tip]), Color(1, 1, 1, 0.95), 1.4)
 	
-	# Marco ornamental circular exterior (oro envejecido)
-	draw_arc(center, radius, 0, TAU, 48, UIConstants.GOLD_BASE, 2.5)
-	draw_arc(center, radius - 3.5, 0, TAU, 48, UIConstants.GOLD_DIM, 1.0)
+	# Marco ornamental circular exterior (oro envejecido con gemas de cuadrante)
+	fg_layer.draw_arc(center, radius, 0, TAU, 48, UIConstants.GOLD_BASE, 2.5)
+	fg_layer.draw_arc(center, radius - 3.5, 0, TAU, 48, UIConstants.GOLD_DIM, 1.0)
 	
 	# Puntos cardinales (N, S, E, O)
 	var north_pos = center + Vector2(0, -radius + 12)
-	draw_string(ThemeDB.fallback_font, north_pos + Vector2(-4, 4), "N", HORIZONTAL_ALIGNMENT_CENTER, -1, 10, UIConstants.GOLD_BRIGHT)
+	fg_layer.draw_string(ThemeDB.fallback_font, north_pos + Vector2(-4, 4), "N", HORIZONTAL_ALIGNMENT_CENTER, -1, 10, UIConstants.GOLD_BRIGHT)
 	
 	# Etiqueta de atajo en la parte inferior si se pasa el ratón
 	if is_hovered:
-		draw_circle(center + Vector2(0, radius - 10), 16.0, Color(0, 0, 0, 0.75))
-		draw_string(ThemeDB.fallback_font, center + Vector2(-22, radius - 6), "[M] MAPA", HORIZONTAL_ALIGNMENT_CENTER, -1, 9, UIConstants.GOLD_BRIGHT)
+		fg_layer.draw_circle(center + Vector2(0, radius - 10), 16.0, Color(0, 0, 0, 0.8))
+		fg_layer.draw_string(ThemeDB.fallback_font, center + Vector2(-22, radius - 6), "[M] MAPA", HORIZONTAL_ALIGNMENT_CENTER, -1, 9, UIConstants.GOLD_BRIGHT)
 
 func _world_to_minimap_offset(diff: Vector3, scale_f: float) -> Vector2:
 	return Vector2(diff.x * scale_f, diff.z * scale_f)
@@ -180,4 +236,5 @@ func _draw_directional_arrow(pos: Vector2, dir: Vector2, arrow_size: float, col:
 	var left = pos + dir.rotated(2.3) * (arrow_size * 0.8)
 	var right = pos + dir.rotated(-2.3) * (arrow_size * 0.8)
 	var pts: PackedVector2Array = [tip, left, pos, right]
-	draw_colored_polygon(pts, col)
+	if fg_layer:
+		fg_layer.draw_colored_polygon(pts, col)

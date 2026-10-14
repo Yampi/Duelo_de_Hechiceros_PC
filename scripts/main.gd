@@ -22,12 +22,20 @@ const MAX_SURVIVAL_ACTIVE_ENEMIES: int = 12
 var survival_spawn_queue: Array[Dictionary] = []
 var _queue_drain_timer: float = 0.0
 
+var fog_3d_quad: MeshInstance3D = null
+var fog_3d_mat: ShaderMaterial = null
+var _enemy_fog_timer: float = 0.0
+
 func _ready() -> void:
 	# Generate 256x256m bounded 4-zone map
 	map_generator.generate_map()
 	
+	# Setup 3D Scenario Fog of War Post-Processing
+	_setup_3d_scenario_fog()
+	
 	# Position player in safe Zone 1 (Pradera Inicial)
-	player.global_position = MapConfig.PLAYER_SPAWN_POS
+	var spawn_y = MapConfig.get_height_at(MapConfig.PLAYER_SPAWN_POS.x, MapConfig.PLAYER_SPAWN_POS.z)
+	player.global_position = Vector3(MapConfig.PLAYER_SPAWN_POS.x, spawn_y, MapConfig.PLAYER_SPAWN_POS.z)
 	camera_rig.follow_target = player
 	hud.set_player_reference(player)
 	
@@ -78,15 +86,66 @@ func _ready() -> void:
 	_update_target_atmospheric_fog(MapConfig.ZoneId.PRADERA_INICIAL)
 	if player and GameManager.fog_of_war:
 		GameManager.fog_of_war.update_player_position(player.global_position)
+		_update_fog_visuals()
+
+func _setup_3d_scenario_fog() -> void:
+	var cam = camera_rig.get_node_or_null("SpringArm3D/Camera3D") as Camera3D
+	if not cam:
+		return
+	fog_3d_quad = MeshInstance3D.new()
+	fog_3d_quad.name = "FogOfWar3DScenario"
+	var qmesh = QuadMesh.new()
+	qmesh.size = Vector2(2.0, 2.0)
+	qmesh.flip_faces = false
+	fog_3d_quad.mesh = qmesh
+	
+	var shader = preload("res://shaders/fog_of_war_3d.gdshader")
+	fog_3d_mat = ShaderMaterial.new()
+	fog_3d_mat.shader = shader
+	fog_3d_quad.material_override = fog_3d_mat
+	cam.add_child(fog_3d_quad)
+
+func _update_fog_visuals() -> void:
+	if not player or not GameManager.fog_of_war:
+		return
+	var p_pos = player.global_position
+	var f_tex = GameManager.fog_of_war.get_fog_texture()
+	if fog_3d_mat:
+		fog_3d_mat.set_shader_parameter("player_pos", p_pos)
+		if f_tex:
+			fog_3d_mat.set_shader_parameter("fog_texture", f_tex)
+	if map_generator and map_generator.has_method("update_terrain_fog"):
+		map_generator.update_terrain_fog(p_pos, f_tex)
+
+func _update_enemies_fog_visibility() -> void:
+	if not GameManager.fog_of_war or not player:
+		return
+	for enemy in get_tree().get_nodes_in_group("enemy"):
+		if is_instance_valid(enemy) and not enemy.get("is_dead"):
+			var is_vis = GameManager.fog_of_war.is_point_visible(enemy.global_position)
+			if enemy.has_method("set_fog_visibility"):
+				enemy.set_fog_visibility(is_vis)
+			elif enemy.has_node("Model"):
+				enemy.get_node("Model").visible = is_vis
 
 func _process(delta: float) -> void:
 	if player and GameManager.fog_of_war:
 		GameManager.fog_of_war.update_player_position(player.global_position)
+		_update_fog_visuals()
 	
-	if world_env and world_env.environment and world_env.environment.fog_enabled:
+	_enemy_fog_timer += delta
+	if _enemy_fog_timer >= 0.12:
+		_enemy_fog_timer = 0.0
+		_update_enemies_fog_visibility()
+	
+	if world_env and world_env.environment:
 		var env = world_env.environment
-		env.fog_light_color = env.fog_light_color.lerp(target_fog_color, delta * 1.5)
-		env.fog_density = lerp(env.fog_density, target_fog_density, delta * 1.5)
+		if env.volumetric_fog_enabled:
+			env.volumetric_fog_albedo = env.volumetric_fog_albedo.lerp(target_fog_color, delta * 1.5)
+			env.volumetric_fog_density = lerp(env.volumetric_fog_density, target_fog_density, delta * 1.5)
+		elif env.fog_enabled:
+			env.fog_light_color = env.fog_light_color.lerp(target_fog_color, delta * 1.5)
+			env.fog_density = lerp(env.fog_density, target_fog_density, delta * 1.5)
 	
 	_check_poi_discovery()
 	match GameManager.current_mode:
@@ -122,16 +181,16 @@ func _check_poi_discovery() -> void:
 func _update_target_atmospheric_fog(zone_id: int) -> void:
 	match zone_id:
 		MapConfig.ZoneId.PRADERA_INICIAL:
-			target_fog_color = Color(0.68, 0.78, 0.88)
-			target_fog_density = 0.006
+			target_fog_color = Color(0.72, 0.74, 0.72)
+			target_fog_density = 0.011
 		MapConfig.ZoneId.BOSQUE_EXTERIOR:
-			target_fog_color = Color(0.32, 0.46, 0.38)
-			target_fog_density = 0.014
+			target_fog_color = Color(0.38, 0.48, 0.42)
+			target_fog_density = 0.016
 		MapConfig.ZoneId.CORAZON_BOSQUE:
-			target_fog_color = Color(0.24, 0.18, 0.36)
-			target_fog_density = 0.022
+			target_fog_color = Color(0.24, 0.20, 0.35)
+			target_fog_density = 0.024
 		MapConfig.ZoneId.RUINAS_ARCANAS:
-			target_fog_color = Color(0.38, 0.26, 0.22)
+			target_fog_color = Color(0.38, 0.28, 0.24)
 			target_fog_density = 0.018
 
 func _on_zone_changed(zone_id: int, zone_data: Dictionary) -> void:

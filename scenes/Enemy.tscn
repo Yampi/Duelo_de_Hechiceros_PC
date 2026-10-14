@@ -25,6 +25,6 @@ outline_size = 6
 
 [node name="SinisterLight" type="OmniLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 0)
-light_color = Color(1, 0.2, 0.2, 1)
-light_energy = 1.0
-omni_range = 3.0
+light_color = Color(0.9, 0.35, 0.25, 1)
+light_energy = 0.22
+omni_range = 1.6

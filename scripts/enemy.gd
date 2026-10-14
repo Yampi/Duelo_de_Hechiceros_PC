@@ -105,23 +105,40 @@ var elemental_resistances: Array[String] = []
 var anim_walk: String = "Walk-fast"
 var anim_attack: String = "Attack-two handed_002"
 var anim_idle: String = "Happy_002"
+var anim_combat_idle: String = "CharacterArmature|Attacking_Idle"
+var anim_run: String = "CharacterArmature|Run"
+var anim_hit: String = "CharacterArmature|RecieveHit_Attacking"
 var anim_death: String = "Die-jump-ground-face4 test"
+
+func get_current_idle() -> String:
+	if target_ref != null or current_state in [AIState.ALERT, AIState.CHASE, AIState.ATTACK]:
+		if anim_combat_idle != "" and anim_player and anim_player.has_animation(anim_combat_idle):
+			return anim_combat_idle
+		elif anim_player and anim_player.has_animation("combat_idle"):
+			return "combat_idle"
+	return anim_idle
+
 
 @onready var hp_bar: Label3D = $HpLabel
 @onready var model_container: Node3D = $Model
 
 var anim_player: AnimationPlayer = null
 
-var goblin_model_scene: PackedScene = preload("res://assets/characters/GoblinAnimated.glb")
-var spear_model_scene: PackedScene = preload("res://assets/characters/SPK/Spear skeleton.glb")
-var archer_model_scene: PackedScene = preload("res://assets/characters/skelly/Archer.glb")
-var imp_model_scene: PackedScene = preload("res://assets/characters/Puglin.glb")
-var shadow_imp_model_scene: PackedScene = preload("res://assets/characters/Imp.glb")
+var rogue_model_scene: PackedScene = preload("res://assets/characters/rogue/Rogue.fbx")
+var skeleton_model_scene: PackedScene = preload("res://assets/characters/monsters/Skeleton.fbx")
+var ranger_model_scene: PackedScene = preload("res://assets/characters/ranger/Ranger.fbx")
+var bat_model_scene: PackedScene = preload("res://assets/characters/monsters/Bat.fbx")
+var slime_model_scene: PackedScene = preload("res://assets/characters/monsters/Slime.fbx")
 var dragon_model_scene: PackedScene = preload("res://assets/characters/monsters/Dragon.fbx")
 var arcane_loot_scene: PackedScene = preload("res://scenes/ArcaneLoot.tscn")
 var world_item_scene: PackedScene = preload("res://scenes/WorldItem.tscn")
 var bone_arrow_scene: PackedScene = preload("res://scenes/BoneArrow.tscn")
 var fire_spit_scene: PackedScene = preload("res://scenes/FireSpit.tscn")
+
+var rogue_tex: Texture2D = preload("res://assets/characters/rogue/Rogue_Texture.png")
+var dagger_tex: Texture2D = preload("res://assets/characters/rogue/Rogue_Dagger_Texture.png")
+var ranger_tex: Texture2D = preload("res://assets/characters/ranger/Ranger_Texture.png")
+var bow_tex: Texture2D = preload("res://assets/characters/ranger/Ranger_Bow_Texture.png")
 
 var show_hp_timer: float = 0.0
 
@@ -158,6 +175,14 @@ func setup_as_scout() -> void:
 	alert_duration = 0.45
 	patrol_radius = 4.0
 
+func set_fog_visibility(is_vis: bool) -> void:
+	if has_node("Model"):
+		$Model.visible = is_vis
+	if has_node("HpLabel"):
+		$HpLabel.visible = is_vis and (current_health < max_health or is_boss)
+	if has_node("SinisterLight"):
+		$SinisterLight.visible = is_vis
+
 func _setup_archetype() -> void:
 	if not has_node("Model"):
 		return
@@ -174,7 +199,7 @@ func _setup_archetype() -> void:
 	if is_boss:
 		model_inst = dragon_model_scene.instantiate()
 		model_yaw = PI
-		base_scale = Vector3(1.2, 1.2, 1.2)
+		base_scale = Vector3(1.15, 1.15, 1.15)
 		max_health = 600.0
 		move_speed = 3.6
 		attack_damage = 25.0
@@ -197,142 +222,168 @@ func _setup_archetype() -> void:
 	else:
 		match enemy_type:
 			EnemyType.GOBLIN:
-				model_inst = goblin_model_scene.instantiate()
+				model_inst = rogue_model_scene.instantiate()
 				model_yaw = PI
-				base_scale = Vector3(0.52, 0.52, 0.52)
+				_apply_rogue_materials(model_inst, Color(0.85, 1.05, 0.85))
+				base_scale = Vector3(0.55, 0.55, 0.55)
 				max_health = 60.0
 				move_speed = 3.8 # Slower than player walk (4.8 m/s)
 				attack_damage = 13.0
 				attack_range = 1.9
 				attack_cooldown = 1.35
-				attack_windup = 0.28
-				attack_clip_duration = 1.46
-				attack_anim_speed = 1.35
+				attack_windup = 0.25
+				attack_clip_duration = 0.75
+				attack_anim_speed = 1.2
 				detection_radius = 14.0
 				max_leash_distance = 20.0
 				lose_target_distance = 18.0
 				max_chase_duration = 8.0
 				patrol_radius = 5.0
-				anim_walk = "Walk-fast"
-				anim_attack = "Attack-two handedAction"
-				anim_idle = "combat_idle"
-				anim_death = "Die-jump-ground-face4 test"
+				anim_walk = "CharacterArmature|Walk"
+				anim_run = "CharacterArmature|Run"
+				anim_attack = "CharacterArmature|Dagger_Attack"
+				anim_idle = "CharacterArmature|Idle"
+				anim_combat_idle = "CharacterArmature|Attacking_Idle"
+				anim_hit = "CharacterArmature|RecieveHit_Attacking"
+				anim_death = "CharacterArmature|Death"
 				elemental_weaknesses = ["fire"]
 				elemental_resistances = ["force"]
 				
 			EnemyType.SKELETON_SPEAR:
-				model_inst = spear_model_scene.instantiate()
+				model_inst = skeleton_model_scene.instantiate()
 				model_yaw = PI
-				base_scale = Vector3(0.95, 0.95, 0.95)
+				base_scale = Vector3(0.38, 0.38, 0.38)
 				max_health = 95.0
 				move_speed = 3.4 # Heavy armored, player walks away cleanly
 				attack_damage = 16.0
-				attack_range = 2.6
+				attack_range = 2.4
 				attack_cooldown = 1.6
 				attack_windup = 0.32
-				attack_clip_duration = 1.33
-				attack_anim_speed = 1.30
+				attack_clip_duration = 1.15
+				attack_anim_speed = 1.2
 				detection_radius = 15.0
 				max_leash_distance = 22.0
 				lose_target_distance = 19.0
 				max_chase_duration = 9.0
 				patrol_radius = 6.0
-				anim_walk = "run"
-				anim_attack = "stab"
-				anim_idle = "idle"
-				anim_death = "dead"
+				anim_walk = "SkeletonArmature|Skeleton_Running"
+				anim_attack = "SkeletonArmature|Skeleton_Attack"
+				anim_idle = "SkeletonArmature|Skeleton_Idle"
+				anim_death = "SkeletonArmature|Skeleton_Death"
 				elemental_weaknesses = ["force"]
 				elemental_resistances = ["ice"]
 				
 			EnemyType.SKELETON_ARCHER:
-				model_inst = archer_model_scene.instantiate()
+				model_inst = ranger_model_scene.instantiate()
 				model_yaw = PI
-				base_scale = Vector3(0.9, 0.9, 0.9)
+				_apply_ranger_materials(model_inst, Color(0.90, 0.92, 1.0))
+				base_scale = Vector3(0.58, 0.58, 0.58)
 				max_health = 55.0
-				move_speed = 4.2 # Tactical kiter
+				move_speed = 3.6 # Tactical kiter, slower than player walking
 				attack_damage = 14.0
 				attack_range = 14.0
 				attack_cooldown = 2.0
-				attack_windup = 0.48
-				attack_clip_duration = 1.43
-				attack_anim_speed = 1.25
-				detection_radius = 20.0
+				attack_windup = 0.42
+				attack_clip_duration = 1.25
+				attack_anim_speed = 1.2
+				detection_radius = 22.0
 				max_leash_distance = 26.0
 				lose_target_distance = 24.0
 				max_chase_duration = 12.0
 				patrol_radius = 7.0
-				anim_walk = "walk"
-				anim_attack = "shoot"
-				anim_idle = "idle"
-				anim_death = "" # Procedural collapse death
+				anim_walk = "CharacterArmature|Walk"
+				anim_attack = "CharacterArmature|Bow_Attack_Shoot"
+				anim_idle = "CharacterArmature|Idle"
+				anim_death = "CharacterArmature|Death"
 				elemental_weaknesses = ["lightning"]
 				elemental_resistances = ["earth"]
 				
 			EnemyType.FIRE_IMP:
-				model_inst = imp_model_scene.instantiate()
+				model_inst = bat_model_scene.instantiate()
 				model_yaw = PI
-				base_scale = Vector3(0.78, 0.78, 0.78)
+				model_inst.position.y = 0.35 # Predatory flying hover
+				_apply_bat_materials(model_inst)
+				base_scale = Vector3(0.32, 0.32, 0.32)
 				max_health = 45.0 # Fragile glass cannon
-				move_speed = 5.2 # Fast! Faster than player walk (4.8 m/s), requires sprint/CC
+				move_speed = 4.8 # Fast glass cannon; player walk is 4.8 m/s, sprint is 7.5 m/s (escape delta 2.7 m/s)
 				attack_damage = 10.0
 				attack_range = 9.0
 				attack_cooldown = 1.8
 				attack_windup = 0.20
-				attack_clip_duration = 0.55
-				attack_anim_speed = 1.10
+				attack_clip_duration = 0.85
+				attack_anim_speed = 1.15
 				detection_radius = 16.0
 				max_leash_distance = 22.0
 				lose_target_distance = 20.0
 				max_chase_duration = 10.0
 				patrol_radius = 6.0
-				anim_walk = "walk"
-				anim_attack = "attack"
-				anim_idle = "idle"
-				anim_death = ""
+				anim_walk = "BatArmature|Bat_Flying"
+				anim_attack = "BatArmature|Bat_Attack"
+				anim_idle = "BatArmature|Bat_Flying"
+				anim_death = "BatArmature|Bat_Death"
 				elemental_weaknesses = ["ice"]
 				elemental_resistances = ["fire"]
-				_apply_imp_materials(model_inst, Color(1.0, 0.45, 0.1), Color(1.0, 0.3, 0.0))
-				anim_player = _build_imp_anim_player(model_inst)
 				
 			EnemyType.SHADOW_IMP:
-				model_inst = shadow_imp_model_scene.instantiate()
+				model_inst = slime_model_scene.instantiate()
 				model_yaw = PI
-				base_scale = Vector3(0.82, 0.82, 0.82)
+				_apply_slime_materials(model_inst)
+				base_scale = Vector3(0.60, 0.60, 0.60)
 				max_health = 50.0 # Fragile
 				move_speed = 5.0 # Fast! Requires sprint/CC
 				attack_damage = 11.0
 				attack_range = 8.5
 				attack_cooldown = 1.8
-				attack_windup = 0.20
-				attack_clip_duration = 0.55
-				attack_anim_speed = 1.10
+				attack_windup = 0.22
+				attack_clip_duration = 0.80
+				attack_anim_speed = 1.15
 				detection_radius = 16.0
 				max_leash_distance = 22.0
 				lose_target_distance = 20.0
 				max_chase_duration = 10.0
 				patrol_radius = 6.0
-				anim_walk = "walk"
-				anim_attack = "attack"
-				anim_idle = "idle"
-				anim_death = ""
+				anim_walk = "Armature|Slime_Walk"
+				anim_attack = "Armature|Slime_Attack"
+				anim_idle = "Armature|Slime_Idle"
+				anim_death = "Armature|Slime_Death"
 				elemental_weaknesses = ["lightning"]
 				elemental_resistances = ["force"]
-				_apply_imp_materials(model_inst, Color(0.2, 0.1, 0.3), Color(0.85, 0.2, 1.0))
-				anim_player = _build_imp_anim_player(model_inst)
 	
 	scale = base_scale
 	if model_inst:
 		model_inst.rotation.y = model_yaw
 		container.add_child(model_inst)
-		if not anim_player:
-			anim_player = model_inst.find_child("AnimationPlayer", true, false)
+		anim_player = model_inst.find_child("AnimationPlayer", true, false)
 		if anim_player:
 			anim_player.playback_default_blend_time = 0.16
-			if enemy_type == EnemyType.GOBLIN:
-				_setup_goblin_animations(anim_player)
+			_setup_animation_aliases(anim_player)
 			_setup_animation_loop_modes(anim_player)
 			current_anim = ""
 			play_anim(anim_idle)
+
+func _setup_animation_aliases(ap: AnimationPlayer) -> void:
+	if not ap:
+		return
+	var lib = ap.get_animation_library("")
+	if not lib:
+		return
+	
+	var candidates = {
+		"idle": [anim_idle, "CharacterArmature|Idle", "SkeletonArmature|Skeleton_Idle", "BatArmature|Bat_Flying", "Armature|Slime_Idle", "DragonArmature|Dragon_Flying"],
+		"combat_idle": [anim_combat_idle, "CharacterArmature|Attacking_Idle", "CharacterArmature|Idle_Attacking", "combat_idle", anim_idle],
+		"walk": [anim_walk, "CharacterArmature|Walk", "SkeletonArmature|Skeleton_Running", "BatArmature|Bat_Flying", "Armature|Slime_Walk", "DragonArmature|Dragon_Flying"],
+		"run": [anim_run, "CharacterArmature|Run", "SkeletonArmature|Skeleton_Running", "BatArmature|Bat_Flying", "Armature|Slime_Walk", "DragonArmature|Dragon_Flying"],
+		"attack": [anim_attack, "CharacterArmature|Dagger_Attack", "CharacterArmature|Bow_Attack_Shoot", "SkeletonArmature|Skeleton_Attack", "BatArmature|Bat_Attack", "Armature|Slime_Attack", "DragonArmature|Dragon_Attack"],
+		"death": [anim_death, "CharacterArmature|Death", "SkeletonArmature|Skeleton_Death", "BatArmature|Bat_Death", "Armature|Slime_Death", "DragonArmature|Dragon_Death"],
+		"hit": [anim_hit, "CharacterArmature|RecieveHit_Attacking", "CharacterArmature|RecieveHit", "BatArmature|Bat_Hit", "DragonArmature|Dragon_Hit", "SkeletonArmature|Skeleton_Attack"]
+	}
+	
+	for alias in candidates:
+		if not lib.has_animation(alias):
+			for candidate in candidates[alias]:
+				if candidate != "" and lib.has_animation(candidate):
+					lib.add_animation(alias, lib.get_animation(candidate))
+					break
 
 func _setup_animation_loop_modes(ap: AnimationPlayer) -> void:
 	if not ap:
@@ -340,145 +391,66 @@ func _setup_animation_loop_modes(ap: AnimationPlayer) -> void:
 	for a_name in ap.get_animation_list():
 		var anim = ap.get_animation(a_name)
 		var lower = a_name.to_lower()
-		# Looping locomotion, stances, and blocks
-		if lower in ["idle", "walk", "walk-fast", "run", "chase", "run-flee", "flee shoot", "block", "slash walking", "combat_idle"] or lower.ends_with("flying"):
+		if lower in ["idle", "walk", "run", "chase", "combat_idle"] or lower.ends_with("idle") or lower.ends_with("walk") or lower.ends_with("run") or lower.ends_with("running") or lower.ends_with("flying"):
 			anim.loop_mode = Animation.LOOP_LINEAR
-		# One-shot attacks, hits, deaths, and reactions
-		elif lower in ["attack", "attack-two handedaction", "attack-two handedaction_001", "attack-two handed_002", "slash", "stab", "forceful trust", "shoot", "hit", "dead", "die-jump-ground-face4 test", "kick", "dodge", "stunned", "standing up", "dance-salsa", "happy_002", "cry_001"] or lower.ends_with("attack") or lower.ends_with("attack2") or lower.ends_with("death") or lower.ends_with("hit"):
+		else:
 			anim.loop_mode = Animation.LOOP_NONE
 
-func _setup_goblin_animations(ap: AnimationPlayer) -> void:
-	if not ap:
-		return
-	var lib = ap.get_animation_library("")
-	if not lib:
-		return
-	
-	# Generate tense combat idle from ready stance tracks of Attack-two handedAction if not present
-	if not ap.has_animation("combat_idle") and ap.has_animation("Attack-two handedAction"):
-		var src = ap.get_animation("Attack-two handedAction")
-		var idle_anim = Animation.new()
-		idle_anim.length = 1.4
-		idle_anim.loop_mode = Animation.LOOP_LINEAR
-		
-		for trk in range(src.get_track_count()):
-			var p = src.track_get_path(trk)
-			var type = src.track_get_type(trk)
-			var new_trk = idle_anim.add_track(type)
-			idle_anim.track_set_path(new_trk, p)
-			idle_anim.track_set_interpolation_type(new_trk, Animation.INTERPOLATION_LINEAR)
-			
-			var val_start = src.track_get_key_value(trk, 0) if src.track_get_key_count(trk) > 0 else null
-			var val_mid = val_start
-			for k in range(src.track_get_key_count(trk)):
-				if src.track_get_key_time(trk, k) <= 0.32:
-					val_mid = src.track_get_key_value(trk, k)
-			
-			if val_start != null:
-				idle_anim.track_insert_key(new_trk, 0.0, val_start)
-				idle_anim.track_insert_key(new_trk, 0.7, val_mid)
-				idle_anim.track_insert_key(new_trk, 1.4, val_start)
-		
-		lib.add_animation("combat_idle", idle_anim)
+func _apply_rogue_materials(inst: Node3D, tint: Color = Color.WHITE) -> void:
+	var r_mat = StandardMaterial3D.new()
+	r_mat.albedo_texture = rogue_tex
+	r_mat.albedo_color = tint
+	r_mat.roughness = 0.65
+	var d_mat = StandardMaterial3D.new()
+	d_mat.albedo_texture = dagger_tex
+	d_mat.roughness = 0.65
+	for m in inst.find_children("*", "MeshInstance3D", true, false):
+		m.material_override = d_mat if m.name == "Rogue_Dagger" else r_mat
 
-func _build_imp_anim_player(model_inst: Node3D) -> AnimationPlayer:
-	var sk = model_inst.find_child("Skeleton3D", true, false) as Skeleton3D
-	if not sk:
-		return null
-	
-	var ap = AnimationPlayer.new()
-	ap.name = "AnimationPlayer"
-	ap.playback_default_blend_time = 0.15
-	model_inst.add_child(ap)
-	
-	var lib = AnimationLibrary.new()
-	var sk_rel = str(model_inst.get_path_to(sk))
-	
-	# Cache rest rotations for key bones to ensure 100% deformation-free relative animation
-	var bone_rests: Dictionary = {}
-	for b_idx in range(sk.get_bone_count()):
-		var b_name = sk.get_bone_name(b_idx)
-		bone_rests[b_name] = sk.get_bone_rest(b_idx).basis.get_rotation_quaternion()
-	
-	var add_rot_track = func(anim: Animation, bone_name: String, key_times: Array, euler_offsets: Array):
-		if not bone_rests.has(bone_name):
-			return
-		var rest_q: Quaternion = bone_rests[bone_name]
-		var trk = anim.add_track(Animation.TYPE_ROTATION_3D)
-		anim.track_set_path(trk, sk_rel + ":" + bone_name)
-		anim.track_set_interpolation_type(trk, Animation.INTERPOLATION_LINEAR)
-		for i in range(key_times.size()):
-			var offset: Vector3 = euler_offsets[i]
-			var q: Quaternion = rest_q * Quaternion.from_euler(offset)
-			anim.rotation_track_insert_key(trk, key_times[i], q)
+func _apply_ranger_materials(inst: Node3D, tint: Color = Color.WHITE) -> void:
+	var r_mat = StandardMaterial3D.new()
+	r_mat.albedo_texture = ranger_tex
+	r_mat.albedo_color = tint
+	r_mat.roughness = 0.65
+	var b_mat = StandardMaterial3D.new()
+	b_mat.albedo_texture = bow_tex
+	b_mat.roughness = 0.65
+	for m in inst.find_children("*", "MeshInstance3D", true, false):
+		m.material_override = b_mat if m.name == "Ranger_Bow" else r_mat
 
-	# 1. IDLE (Breathing predatory hover, arms down at sides, ready leg flexion)
-	var idle = Animation.new()
-	idle.length = 1.4
-	idle.loop_mode = Animation.LOOP_LINEAR
-	
-	add_rot_track.call(idle, "pelvis", [0.0, 0.7, 1.4], [Vector3.ZERO, Vector3(0.04, 0, 0), Vector3.ZERO])
-	add_rot_track.call(idle, "spine_01", [0.0, 0.7, 1.4], [Vector3(0.08, 0, 0), Vector3(0.02, 0, 0), Vector3(0.08, 0, 0)])
-	add_rot_track.call(idle, "Head", [0.0, 0.7, 1.4], [Vector3(-0.06, 0, 0), Vector3(-0.02, 0, 0), Vector3(-0.06, 0, 0)])
-	add_rot_track.call(idle, "upperarm_l", [0.0, 0.7, 1.4], [Vector3(0.1, 0.15, -0.35), Vector3(0.15, 0.2, -0.28), Vector3(0.1, 0.15, -0.35)])
-	add_rot_track.call(idle, "upperarm_r", [0.0, 0.7, 1.4], [Vector3(0.1, -0.15, 0.35), Vector3(0.15, -0.2, 0.28), Vector3(0.1, -0.15, 0.35)])
-	add_rot_track.call(idle, "lowerarm_l", [0.0, 0.7, 1.4], [Vector3(0.35, 0, 0), Vector3(0.42, 0, 0), Vector3(0.35, 0, 0)])
-	add_rot_track.call(idle, "lowerarm_r", [0.0, 0.7, 1.4], [Vector3(0.35, 0, 0), Vector3(0.42, 0, 0), Vector3(0.35, 0, 0)])
-	add_rot_track.call(idle, "thigh_l", [0.0, 0.7, 1.4], [Vector3(0.06, 0, 0), Vector3(0.1, 0, 0), Vector3(0.06, 0, 0)])
-	add_rot_track.call(idle, "thigh_r", [0.0, 0.7, 1.4], [Vector3(0.06, 0, 0), Vector3(0.1, 0, 0), Vector3(0.06, 0, 0)])
-	add_rot_track.call(idle, "calf_l", [0.0, 0.7, 1.4], [Vector3(-0.08, 0, 0), Vector3(-0.14, 0, 0), Vector3(-0.08, 0, 0)])
-	add_rot_track.call(idle, "calf_r", [0.0, 0.7, 1.4], [Vector3(-0.08, 0, 0), Vector3(-0.14, 0, 0), Vector3(-0.08, 0, 0)])
-	lib.add_animation("idle", idle)
+func _apply_bat_materials(inst: Node3D) -> void:
+	var f_mat = StandardMaterial3D.new()
+	f_mat.albedo_color = Color(1.0, 0.38, 0.12)
+	f_mat.emission_enabled = true
+	f_mat.emission = Color(1.0, 0.28, 0.05)
+	f_mat.emission_energy_multiplier = 1.6
+	f_mat.roughness = 0.5
+	for m in inst.find_children("*", "MeshInstance3D", true, false):
+		m.material_override = f_mat
 
-	# 2. WALK (Dynamic agile stride with reciprocating legs, arms, and spine sway)
-	var walk = Animation.new()
-	walk.length = 0.65
-	walk.loop_mode = Animation.LOOP_LINEAR
-	
-	add_rot_track.call(walk, "thigh_l", [0.0, 0.32, 0.65], [Vector3(0.42, 0, 0), Vector3(-0.42, 0, 0), Vector3(0.42, 0, 0)])
-	add_rot_track.call(walk, "thigh_r", [0.0, 0.32, 0.65], [Vector3(-0.42, 0, 0), Vector3(0.42, 0, 0), Vector3(-0.42, 0, 0)])
-	add_rot_track.call(walk, "calf_l", [0.0, 0.32, 0.65], [Vector3(-0.25, 0, 0), Vector3(0.1, 0, 0), Vector3(-0.25, 0, 0)])
-	add_rot_track.call(walk, "calf_r", [0.0, 0.32, 0.65], [Vector3(0.1, 0, 0), Vector3(-0.25, 0, 0), Vector3(0.1, 0, 0)])
-	add_rot_track.call(walk, "upperarm_l", [0.0, 0.32, 0.65], [Vector3(-0.35, 0.1, -0.25), Vector3(0.35, 0.1, -0.25), Vector3(-0.35, 0.1, -0.25)])
-	add_rot_track.call(walk, "upperarm_r", [0.0, 0.32, 0.65], [Vector3(0.35, -0.1, 0.25), Vector3(-0.35, -0.1, 0.25), Vector3(0.35, -0.1, 0.25)])
-	add_rot_track.call(walk, "lowerarm_l", [0.0, 0.32, 0.65], [Vector3(0.3, 0, 0), Vector3(0.5, 0, 0), Vector3(0.3, 0, 0)])
-	add_rot_track.call(walk, "lowerarm_r", [0.0, 0.32, 0.65], [Vector3(0.5, 0, 0), Vector3(0.3, 0, 0), Vector3(0.5, 0, 0)])
-	add_rot_track.call(walk, "spine_01", [0.0, 0.32, 0.65], [Vector3(0.12, 0.05, 0), Vector3(0.12, -0.05, 0), Vector3(0.12, 0.05, 0)])
-	add_rot_track.call(walk, "Head", [0.0, 0.32, 0.65], [Vector3(-0.08, 0, 0), Vector3(-0.08, 0, 0), Vector3(-0.08, 0, 0)])
-	lib.add_animation("walk", walk)
-
-	# 3. ATTACK (Snapping lunge / fire spit launch)
-	var atk = Animation.new()
-	atk.length = 0.55
-	atk.loop_mode = Animation.LOOP_NONE
-	
-	add_rot_track.call(atk, "spine_01", [0.0, 0.2, 0.55], [Vector3(-0.18, 0, 0), Vector3(0.32, 0, 0), Vector3(0.08, 0, 0)])
-	add_rot_track.call(atk, "Head", [0.0, 0.2, 0.55], [Vector3(-0.25, 0, 0), Vector3(0.25, 0, 0), Vector3(-0.06, 0, 0)])
-	add_rot_track.call(atk, "upperarm_l", [0.0, 0.2, 0.55], [Vector3(-0.3, 0.15, -0.4), Vector3(0.5, 0.1, -0.2), Vector3(0.1, 0.15, -0.35)])
-	add_rot_track.call(atk, "upperarm_r", [0.0, 0.2, 0.55], [Vector3(-0.3, -0.15, 0.4), Vector3(0.5, -0.1, 0.2), Vector3(0.1, -0.15, 0.35)])
-	add_rot_track.call(atk, "thigh_l", [0.0, 0.2, 0.55], [Vector3(-0.1, 0, 0), Vector3(0.2, 0, 0), Vector3(0.06, 0, 0)])
-	add_rot_track.call(atk, "thigh_r", [0.0, 0.2, 0.55], [Vector3(-0.1, 0, 0), Vector3(0.2, 0, 0), Vector3(0.06, 0, 0)])
-	lib.add_animation("attack", atk)
-
-	ap.add_animation_library("", lib)
-	return ap
-
-func _apply_imp_materials(inst: Node3D, base_col: Color, emissive_col: Color) -> void:
-	for mesh in inst.find_children("*", "MeshInstance3D", true, false):
-		var mat = mesh.get_active_material(0)
-		if mat is StandardMaterial3D:
-			var new_mat = mat.duplicate() as StandardMaterial3D
-			new_mat.emission_enabled = true
-			new_mat.emission = emissive_col
-			new_mat.emission_energy_multiplier = 2.2
-			mesh.material_override = new_mat
+func _apply_slime_materials(inst: Node3D) -> void:
+	var s_mat = StandardMaterial3D.new()
+	s_mat.albedo_color = Color(0.32, 0.12, 0.52)
+	s_mat.emission_enabled = true
+	s_mat.emission = Color(0.60, 0.15, 0.90)
+	s_mat.emission_energy_multiplier = 1.3
+	s_mat.roughness = 0.35
+	for m in inst.find_children("*", "MeshInstance3D", true, false):
+		if m.name == "Eyes":
+			var eye_mat = StandardMaterial3D.new()
+			eye_mat.albedo_color = Color(1.0, 0.85, 0.2)
+			eye_mat.emission_enabled = true
+			eye_mat.emission = Color(1.0, 0.85, 0.2)
+			m.material_override = eye_mat
+		else:
+			m.material_override = s_mat
 
 func _setup_boss_visuals() -> void:
 	if has_node("SinisterLight"):
 		var light = $SinisterLight as OmniLight3D
-		light.light_color = Color(0.85, 0.1, 1.0)
-		light.light_energy = 5.5
-		light.omni_range = 8.5
+		light.light_color = Color(0.75, 0.25, 0.95)
+		light.light_energy = 1.8
+		light.omni_range = 5.0
 	if has_node("CollisionShape3D"):
 		var col = $CollisionShape3D as CollisionShape3D
 		if col.shape is CapsuleShape3D:
@@ -509,6 +481,7 @@ func transition_to_state(new_state: AIState, duration: float = 0.0) -> void:
 			state_timer = alert_duration if duration == 0.0 else duration
 			is_winding_up_attack = false
 			update_hp_display()
+			play_anim(get_current_idle(), 0.15)
 		AIState.CHASE:
 			chase_timer = max_chase_duration if duration == 0.0 else duration
 			is_winding_up_attack = false
@@ -520,18 +493,18 @@ func transition_to_state(new_state: AIState, duration: float = 0.0) -> void:
 			is_winding_up_attack = false
 			state_timer = 3.0 if duration == 0.0 else duration
 			update_hp_display()
-			play_anim(anim_idle)
+			play_anim(anim_idle, 0.2)
 		AIState.RETURN:
 			target_ref = null
 			is_winding_up_attack = false
 			update_hp_display()
-			play_anim(anim_walk)
+			play_anim(anim_walk, 0.15)
 		AIState.RECOVER:
 			target_ref = null
 			is_winding_up_attack = false
 			state_timer = 2.0 if duration == 0.0 else duration
 			update_hp_display()
-			play_anim(anim_idle)
+			play_anim(get_current_idle(), 0.2)
 
 func has_line_of_sight_to(target: Node3D) -> bool:
 	if not is_inside_tree() or target == null:
@@ -616,23 +589,26 @@ func notify_investigate(new_target: Node3D, pos: Vector3) -> void:
 
 func get_separation_force() -> Vector3:
 	var current_frame = Engine.get_physics_frames()
-	if (current_frame + get_instance_id()) % 5 != 0 and _separation_calc_frame >= 0:
+	if (current_frame + get_instance_id()) % 4 != 0 and _separation_calc_frame >= 0:
 		return _cached_separation
 	
 	_separation_calc_frame = current_frame
 	var total_force = Vector3.ZERO
 	var checked_count = 0
 	for other in get_tree().get_nodes_in_group("enemy"):
-		if other != self and is_instance_valid(other):
+		if other != self and is_instance_valid(other) and not other.get("is_dead"):
 			var sep_diff = global_position - other.global_position
 			sep_diff.y = 0.0
 			var d_sq = sep_diff.length_squared()
-			if d_sq > 0.001 and d_sq < 3.24: # 1.8 * 1.8
+			if d_sq > 0.001 and d_sq < 3.24: # 1.8m radius
 				var d = sqrt(d_sq)
-				total_force += (sep_diff / d) * (1.8 - d) * 4.5
+				var push_mag = clamp((1.8 - d) * 2.6, 0.0, 3.0)
+				total_force += (sep_diff / d) * push_mag
 				checked_count += 1
 				if checked_count >= 4:
 					break
+	if total_force.length() > 3.2:
+		total_force = total_force.normalized() * 3.2
 	_cached_separation = total_force
 	return _cached_separation
 
@@ -686,6 +662,15 @@ func _physics_process(delta: float) -> void:
 		velocity.x = lerp(velocity.x, 0.0, delta * 12.0)
 		velocity.z = lerp(velocity.z, 0.0, delta * 12.0)
 		is_winding_up_attack = false
+		if model_container:
+			model_container.rotation.z = sin(stun_timer * 16.0) * 0.14
+			model_container.rotation.x = -0.12 + cos(stun_timer * 12.0) * 0.08
+		if stun_timer <= 0.0 and model_container:
+			model_container.rotation.z = 0.0
+			model_container.rotation.x = 0.0
+			if anim_player:
+				anim_player.speed_scale = 1.0
+			play_anim(get_current_idle(), 0.15)
 		move_and_slide()
 		return
 	
@@ -844,7 +829,7 @@ func _physics_process(delta: float) -> void:
 				var diff = target_ref.global_position - global_position
 				diff.y = 0.0
 				var dist = diff.length()
-				if dist <= attack_range:
+				if dist <= attack_range and enemy_type in [EnemyType.GOBLIN, EnemyType.SKELETON_SPEAR]:
 					if attack_timer <= 0.0:
 						transition_to_state(AIState.ATTACK)
 					else:
@@ -853,6 +838,8 @@ func _physics_process(delta: float) -> void:
 						if anim_player and anim_idle != "":
 							anim_player.speed_scale = 1.0
 							play_anim(anim_idle, 0.2)
+				elif dist <= attack_range and attack_timer <= 0.0:
+					transition_to_state(AIState.ATTACK)
 				else:
 					match enemy_type:
 						EnemyType.GOBLIN:
@@ -963,18 +950,23 @@ func _physics_process(delta: float) -> void:
 	if is_fleeing:
 		# Huida: orientar corporalmente en la dirección en la que escapan
 		face_dir = h_vel if h_vel.length_squared() > 0.04 else -diff_target
+	elif is_winding_up_attack or is_recovering_attack:
+		face_dir = diff_target
 	elif enemy_type == EnemyType.SKELETON_ARCHER and dist_target < 6.0 and target_ref:
 		# Retirada táctica mirando al objetivo ("flee shoot")
 		face_dir = diff_target
-	elif (enemy_type == EnemyType.FIRE_IMP or enemy_type == EnemyType.SHADOW_IMP) and attack_timer > (attack_cooldown - 0.12) and target_ref:
+	elif (enemy_type == EnemyType.FIRE_IMP or enemy_type == EnemyType.SHADOW_IMP) and is_winding_up_attack and target_ref:
 		# Diablillos durante el disparo/telegraph de escupitajo de fuego
 		face_dir = diff_target
-	elif h_vel.length_squared() > 0.04:
-		# Desplazamiento / Persecución / Circling / Deambulación: vector horizontal de movimiento
+	elif (enemy_type == EnemyType.FIRE_IMP or enemy_type == EnemyType.SHADOW_IMP) and h_vel.length_squared() > 0.04:
+		# Diablillos en vuelo circular: orientar a lo largo de la trayectoria curva
 		face_dir = h_vel
-	elif (current_state == AIState.ALERT or current_state == AIState.ATTACK or dist_target <= attack_range) and target_ref:
-		# En alerta, ataque o en rango estático de combate: orientar hacia el objetivo
+	elif (current_state == AIState.ALERT or current_state == AIState.ATTACK or (dist_target <= attack_range and enemy_type in [EnemyType.GOBLIN, EnemyType.SKELETON_SPEAR])) and target_ref:
+		# En alerta, ataque o en rango estático de combate cuerpo a cuerpo: orientar hacia el objetivo
 		face_dir = diff_target
+	elif h_vel.length_squared() > 0.04:
+		# Desplazamiento / Persecución / Deambulación: vector horizontal de movimiento
+		face_dir = h_vel
 	# Reposo: conserva orientación actual cuando h_vel <= 0.04 y sin acción de combate
 	
 	if face_dir.length_squared() > 0.001:
@@ -992,7 +984,7 @@ func _process_goblin_ai(delta: float, diff: Vector3, dist: float, target: Node3D
 	if current_health / max_health < 0.35 and flee_timer <= 0.0 and not is_fleeing:
 		is_fleeing = true
 		flee_timer = 3.5
-		play_anim("Run-flee", 0.15)
+		play_anim("run" if (anim_player and anim_player.has_animation("run")) else anim_walk, 0.15)
 	elif flee_timer <= 0.0:
 		is_fleeing = false
 	
@@ -1003,7 +995,7 @@ func _process_goblin_ai(delta: float, diff: Vector3, dist: float, target: Node3D
 		velocity.z = lerp(velocity.z, away_dir.z * flee_speed, delta * 7.0)
 		if anim_player:
 			anim_player.speed_scale = 1.35
-		play_anim("Run-flee", 0.15)
+		play_anim("run" if (anim_player and anim_player.has_animation("run")) else anim_walk, 0.15)
 		return
 	
 	if is_recovering_attack:
@@ -1015,7 +1007,7 @@ func _process_goblin_ai(delta: float, diff: Vector3, dist: float, target: Node3D
 			attack_timer = attack_cooldown
 			if anim_player:
 				anim_player.speed_scale = 1.0
-			play_anim(anim_idle, 0.15)
+			play_anim(get_current_idle(), 0.18)
 		return
 	
 	if dist <= attack_range:
@@ -1040,7 +1032,7 @@ func _process_goblin_ai(delta: float, diff: Vector3, dist: float, target: Node3D
 		else:
 			if anim_player and (not anim_player.is_playing() or anim_player.current_animation != anim_attack):
 				anim_player.speed_scale = 1.0
-				play_anim(anim_idle, 0.2)
+				play_anim(get_current_idle(), 0.18)
 	else:
 		if not is_winding_up_attack:
 			var dir = diff.normalized()
@@ -1048,8 +1040,12 @@ func _process_goblin_ai(delta: float, diff: Vector3, dist: float, target: Node3D
 			velocity.z = lerp(velocity.z, dir.z * eff_speed, delta * 7.0)
 			if anim_player:
 				var h_speed = Vector2(velocity.x, velocity.z).length()
-				anim_player.speed_scale = clamp(h_speed / 3.8, 0.8, 1.5)
-			play_anim(anim_walk, 0.12)
+				if h_speed >= 2.6 and (anim_run != "" or anim_player.has_animation("run")):
+					anim_player.speed_scale = clamp(h_speed / 3.6, 0.85, 1.35)
+					play_anim("run", 0.12)
+				else:
+					anim_player.speed_scale = clamp(h_speed / 2.0, 0.8, 1.3)
+					play_anim(anim_walk, 0.12)
 
 func _process_spear_ai(delta: float, diff: Vector3, dist: float, target: Node3D) -> void:
 	var eff_speed = get_effective_move_speed()
@@ -1059,7 +1055,7 @@ func _process_spear_ai(delta: float, diff: Vector3, dist: float, target: Node3D)
 		velocity.z = lerp(velocity.z, 0.0, delta * 10.0)
 		if anim_player:
 			anim_player.speed_scale = 1.2
-		play_anim("block", 0.12)
+		play_anim("block" if (anim_player and anim_player.has_animation("block")) else anim_idle, 0.12)
 		return
 	
 	# Chance to block when close
@@ -1070,7 +1066,7 @@ func _process_spear_ai(delta: float, diff: Vector3, dist: float, target: Node3D)
 		velocity.z = lerp(velocity.z, 0.0, delta * 10.0)
 		if anim_player:
 			anim_player.speed_scale = 1.2
-		play_anim("block", 0.12)
+		play_anim("block" if (anim_player and anim_player.has_animation("block")) else anim_idle, 0.12)
 		return
 	
 	is_blocking = false
@@ -1143,7 +1139,7 @@ func _process_archer_ai(delta: float, diff: Vector3, dist: float, target: Node3D
 		velocity.z = lerp(velocity.z, back_dir.z * kite_speed, delta * 7.0)
 		if anim_player:
 			anim_player.speed_scale = 1.25
-		play_anim("flee shoot" if (anim_player and anim_player.has_animation("flee shoot")) else anim_walk, 0.12)
+		play_anim("flee shoot" if (anim_player and anim_player.has_animation("flee shoot")) else ("run" if (anim_player and anim_player.has_animation("run")) else anim_walk), 0.12)
 		if attack_timer <= 0.0:
 			attack_timer = attack_cooldown
 			_shoot_bone_arrow(target)
@@ -1453,11 +1449,12 @@ func take_damage(amount: float, knockback: Vector3 = Vector3.ZERO, element: Stri
 func _trigger_hit_reaction(knockback: Vector3) -> void:
 	_flash_hit()
 	
-	if anim_player and anim_player.has_animation("hit"):
-		# Spear skeleton: accelerated hit clip (3.8x) so it never locks combat for more than ~0.35s
-		anim_player.speed_scale = 3.8
-		play_anim("hit", 0.06)
-		hit_stagger_timer = 0.22
+	if anim_player and (anim_player.has_animation(anim_hit) or anim_player.has_animation("hit")):
+		var clip_to_play = anim_hit if (anim_hit != "" and anim_player.has_animation(anim_hit)) else "hit"
+		var hit_speed = 3.8 if enemy_type == EnemyType.SKELETON_SPEAR else 1.35
+		anim_player.speed_scale = hit_speed
+		play_anim(clip_to_play, 0.05)
+		hit_stagger_timer = 0.28
 	else:
 		# Procedural hit reaction: squash & stretch and knockback tilt
 		hit_stagger_timer = 0.20
@@ -1671,54 +1668,36 @@ func die() -> void:
 	
 	_drop_coherent_loot()
 	
+	var death_anim_to_play: String = ""
+	if anim_player:
+		if anim_death != "" and anim_player.has_animation(anim_death):
+			death_anim_to_play = anim_death
+		elif anim_player.has_animation("death"):
+			death_anim_to_play = "death"
+
 	match enemy_type:
-		EnemyType.GOBLIN:
-			# Accelerate death clip to ground impact (~0.85s), hold pose on ground, and fade
-			if anim_player and anim_player.has_animation(anim_death):
-				anim_player.speed_scale = 2.4
-				play_anim(anim_death, 0.05)
-				await get_tree().create_timer(0.85).timeout
-				if is_instance_valid(anim_player):
-					anim_player.pause()
-			var tween = create_tween()
-			tween.tween_interval(0.6)
-			tween.tween_property(self, "scale", Vector3(0.01, 0.01, 0.01), 0.45)
-			await tween.finished
-			queue_free()
-			
 		EnemyType.SKELETON_SPEAR, EnemyType.SKELETON_ARCHER:
-			# Procedural skeleton collapse with bone dust particles
 			_spawn_death_particles(Color(0.88, 0.88, 0.82), 26)
-			if model_container:
-				var tween = create_tween()
-				tween.set_parallel(true)
-				tween.tween_property(model_container, "rotation:x", -PI * 0.45, 0.35)
-				tween.tween_property(model_container, "position:y", -0.4, 0.35)
-				tween.chain().tween_interval(0.4)
-				tween.chain().tween_property(self, "scale", Vector3(base_scale.x * 1.15, 0.02, base_scale.z * 1.15), 0.3)
-				tween.chain().tween_property(self, "scale", Vector3(0.001, 0.001, 0.001), 0.25)
-				await tween.finished
-			queue_free()
-			
 		EnemyType.FIRE_IMP:
 			_spawn_death_particles(Color(1.0, 0.4, 0.1), 32)
-			if model_container:
-				var tween = create_tween()
-				tween.tween_property(model_container, "scale", base_scale * Vector3(1.3, 0.25, 1.3), 0.22)
-				tween.parallel().tween_property(model_container, "position:y", 0.0, 0.22)
-				tween.tween_property(self, "scale", Vector3(0.001, 0.001, 0.001), 0.32)
-				await tween.finished
-			queue_free()
-			
 		EnemyType.SHADOW_IMP:
 			_spawn_death_particles(Color(0.65, 0.15, 0.95), 32)
-			if model_container:
-				var tween = create_tween()
-				tween.tween_property(model_container, "scale", base_scale * Vector3(1.3, 0.25, 1.3), 0.22)
-				tween.parallel().tween_property(model_container, "position:y", 0.0, 0.22)
-				tween.tween_property(self, "scale", Vector3(0.001, 0.001, 0.001), 0.32)
-				await tween.finished
-			queue_free()
+		EnemyType.GOBLIN:
+			_spawn_death_particles(Color(0.4, 0.8, 0.4), 20)
+
+	if death_anim_to_play != "" and anim_player:
+		anim_player.speed_scale = 1.05 if is_boss else 1.0
+		play_anim(death_anim_to_play, 0.05)
+		var clip_len = anim_player.get_animation(death_anim_to_play).length / anim_player.speed_scale
+		await get_tree().create_timer(clamp(clip_len, 0.6, 1.4)).timeout
+		if is_instance_valid(anim_player):
+			anim_player.pause()
+
+	var tween = create_tween()
+	tween.tween_interval(0.5)
+	tween.tween_property(self, "scale", Vector3(0.01, 0.01, 0.01), 0.4)
+	await tween.finished
+	queue_free()
 
 func play_anim(anim_name: String, blend_time: float = 0.2) -> void:
 	if not anim_player or not anim_player.has_animation(anim_name):

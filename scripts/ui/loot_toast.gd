@@ -42,6 +42,28 @@ func setup_from_item(item_id: String, count: int = 1) -> void:
 				border = Color(1.0, 0.65, 0.2)
 	setup(item_name, count, icon, border)
 
+func setup_message(msg: String, icon_tex: Texture2D = null, border_col: Color = UIConstants.GOLD_BASE) -> void:
+	if not label:
+		label = $HBox/Label
+	if not icon_rect:
+		icon_rect = $HBox/Icon
+	
+	label.text = msg
+	label.add_theme_color_override("font_color", UIConstants.TEXT_BODY)
+	
+	if icon_tex:
+		icon_rect.texture = icon_tex
+		icon_rect.visible = true
+	else:
+		icon_rect.visible = false
+	
+	var sb = get_theme_stylebox("panel")
+	if sb:
+		var dup = sb.duplicate() as StyleBoxFlat
+		if dup:
+			dup.border_color = border_col
+			add_theme_stylebox_override("panel", dup)
+
 func _ready() -> void:
 	modulate.a = 0.0
 	position.x += 40.0

@@ -3,7 +3,8 @@
 *.translation
 
 # Tools & Engine binaries
-tools/
+tools/*.exe
+tools/*.zip
 *.exe
 *.zip
 

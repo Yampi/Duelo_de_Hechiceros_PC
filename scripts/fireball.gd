@@ -40,6 +40,7 @@ func _physics_process(delta: float) -> void:
 		flame_mantle.rotation.y += delta * 8.0
 	
 	if progress >= 1.0:
+		global_position = target_point
 		explode()
 		return
 	

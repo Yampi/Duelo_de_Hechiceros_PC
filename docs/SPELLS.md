@@ -1,57 +1,62 @@
 # Grimorio de Hechizos — Duelo de Hechiceros
 
-Documento de referencia canónica para los 9 hechizos del jugador, sus parámetros de combate, teclas asociadas, efectos secundarios y estado de auditoría.
+Documento de referencia canónica para los 11 hechizos arcanos del juego, sus parámetros de combate exactos (`GameManager.spell_catalog`), controles, efectos secundarios y arquitectura de ejecución.
 
-## Tabla de Hechizos
+## Tabla Canónica de Hechizos
 
-| # | Hechizo | Tecla | Costo (MP) | Windup (s) | Cooldown (s) | Daño | Área | Efectos Secundarios | Estado |
-|---|---------|-------|------------|------------|--------------|------|------|---------------------|--------|
-| **1** | **Centella Arcana** | `[1]` | 5.0 | 0.18 | 0.40 | 25.0 *(42.0 pot.)* | Directo *(2.8m AoE pot.)* | Empuje 6.0m (12.0m pot.); se potencia con santuarios arcanos | **OK** |
-| **2** | **Bola de Fuego** | `[2]` | 20.0 | 0.55 | 1.20 | 65.0 | 3.2m radio | Gran retroceso de área, sacudida de cámara (0.35s) | **OK** |
-| **3** | **Invocar Duende** | `[3]` | 30.0 | 0.70 | 2.50 | 36.0 (impacto) | 2.5m radio círculo | Invoca un esbirro duende aliado que combate y sigue al mago | **OK** |
-| **4** | **Onda Expansiva** | `[4]` | 25.0 | 0.50 | 1.80 | 35.0 | 5.0m radio | Empuje radial masivo aleja a todos los enemigos circundantes | **OK** |
-| **5** | **Fuente de Vida** | `[5]` | 35.0 | 0.85 | 3.00 | 0.0 (Cura +40 HP) | Sobre el jugador | No consume maná si la vida está al 100% ("Vida completa") | **Arreglado** |
-| **6** | **Teletransporte** | `[6]` | 15.0 | 0.20 | 1.00 | 0.0 | Desplazamiento 18.0m | Teletransporte instantáneo hacia el cursor con parpadeo arcano | **OK** |
-| **7** | **Proyectil de Hielo** | `[7] / [T]` | 12.0 | 0.25 | 0.60 | 35.0 | Proyectil | Aplica *Slow* (-45% velocidad durante 4.0s); proyectil estable | **Arreglado** |
-| **8** | **Rayo Arcano** | `[8] / [R]` | 18.0 | 0.30 | 0.80 | 35.0 | Raycast directo + 2.6m impacto | Descarga con cinta de quads (núcleo blanco + halo cian), daña trayectoria y encadena a 1-2 enemigos | **Arreglado** |
-| **9** | **Escudo Mágico** | `[9] / [C]` | 20.0 | 0.35 | 4.00 | 0.0 (Defensivo) | Esfera personal | Absorbe 65% del daño recibido durante 7.5s; indicador temporal en HUD | **Arreglado** |
+| # | Id Interno | Hechizo | Tecla / Slot | Costo (MP) | Windup (s) | Cooldown (s) | Efecto / Daño | Área / Alcance | Efectos Secundarios y Mecánicas |
+|---|------------|---------|--------------|------------|------------|--------------|---------------|----------------|---------------------------------|
+| **1** | `magic_bolt` | **Centella Arcana** | `[1]` | 8.0 | 0.15 | 0.60 | 25.0 *(40.0 pot.)* | Directo *(2.8m AoE pot.)* | Empuje 6.0m (12.0m pot.); se potencia con santuarios arcanos |
+| **2** | `fireball` | **Bola de Fuego** | `[2]` | 20.0 | 0.55 | 2.00 | 65.0 | 3.2m radio | Gran retroceso de área, sacudida de pantalla (0.35s), DoT ígneo |
+| **3** | `summon_goblin` | **Invocar Duende** | `[3]` | 30.0 | 0.75 | 8.00 | 36.0 (impacto) | 2.5m radio círculo | Invoca un esbirro duende aliado que combate y acompaña al hechicero |
+| **4** | `shockwave` | **Onda Expansiva** | `[4]` | 18.0 | 0.50 | 3.00 | 35.0 | 5.0m radio | Empuje radial masivo y aturdimiento de 1.0s a enemigos cercanos |
+| **5** | `heal` | **Fuente de Vida** | `[5]` | 25.0 | 0.85 | 5.00 | +40 HP | Personal | Bloqueo preventivo anti-desperdicio si HP está al 100% ("Vida completa") |
+| **6** | `teleport` | **Teletransporte** | `[6] / [Espacio]` | 15.0 | 0.20 | 3.00 | Movilidad | 18.0m hacia cursor | Parpadeo dimensional instantáneo, partículas de origen y llegada |
+| **7** | `ice_projectile` | **Proyectil de Hielo** | `[7] / [T]` | 12.0 | 0.25 | 1.20 | 35.0 | Proyectil | Aplica lentitud (-45% vel. 4.0s); 3 impactos acumulan congelación (2.0s) |
+| **8** | `lightning` | **Rayo Arcano** | `[8] / [R]` | 24.0 | 0.30 | 2.80 | 35.0 | Cinta volumétrica 3D | Raycast balístico instantáneo; aturde y encadena hasta 2 enemigos (5.5m) |
+| **9** | `arcane_shield` | **Escudo Mágico** | `[9] / [F]` | 20.0 | 0.35 | 6.00 | Defensivo | Esfera Fresnel personal | Absorbe 65% de daño recibido por 7.5s; smart fallback en `[F]` |
+| **10** | `earth_fissure` | **Fisura de Tierra** | Grimoire `[G]` | 22.0 | 0.35 | 2.50 | 20.0 | 4.0m radio | Pantano de fango sísmico: hunde y ralentiza 70% a enemigos durante 4.0s |
+| **11** | `arcane_vines` | **Enredaderas Arcanas** | Grimoire `[G]` | 25.0 | 0.40 | 3.50 | 15.0 | 3.0m radio | Zarzas arcanas: inmovilizan completamente (enraízan) durante 3.0s |
 
 ---
 
-## Modificaciones y Correcciones Implementadas
+## Controles e Integración de Interacción
+
+- **Slots 1 a 9 (`[1]` .. `[9]`)**: Selección y lanzamiento directo de los 9 hechizos equipados en la barra de combate.
+- **Acceso Rápido Ergonómico**:
+  - `[Espacio]`: Teletransporte rápido hacia la dirección del cursor.
+  - `[T]`: Proyectil de Hielo (slot 7).
+  - `[R]`: Rayo Arcano (slot 8).
+  - `[F]`: Smart key — Si el jugador se encuentra frente a un interactuable (`WorldItem`, `AncientAltar`, `FruitTree`, `GatheringNode`), interactúa de inmediato. Si no hay objeto en rango, ejecuta Escudo Mágico.
+- **Interacción Universal Directa**:
+  - `[E]`: Prioridad absoluta de interacción con cualquier elemento del mundo (recoger botín, activar santuarios arcanos, recolectar nodos botánicos y minerales).
+- **Consumibles Rápidos**:
+  - `[Q]`: Poción de salud / Manzana (cura HP).
+  - `[Z]`: Poción de maná / Pergamino arcano (regenera MP y aplica Haste).
+- **Grimorio y Personalización**:
+  - `[G]`: Modal de Grimorio para intercambiar hechizos entre el catálogo de 11 y las 9 ranuras activas.
+
+---
+
+## Modificaciones y Correcciones Integradas
 
 1. **Rayo Arcano (`scripts/lightning_bolt.gd`)**:
-   - Reemplazado el renderizado previo de `PRIMITIVE_LINES` de 1px por una geometría volumétrica de doble cinta cruzada (quads) con núcleo blanco radiante y halo arcano cian (`StandardMaterial3D` aditivo no sombreado).
-   - Detección precisa de objetivos en la trayectoria entre la gema del báculo y el destino mediante `PhysicsRayQueryParameters3D`.
-   - Explosión radial en punto de impacto y bifurcación/encadenamiento eléctrico hacia hasta 2 enemigos adicionales en un radio de 5.5 metros.
-   - Feedback acústico/visual con sacudida de pantalla calibrada (0.25s) y chispas de impacto.
+   - Geometría volumétrica de doble cinta cruzada (quads) con núcleo blanco radiante y halo arcano cian (`StandardMaterial3D` aditivo no sombreado).
+   - Raycast balístico preciso con `PhysicsRayQueryParameters3D`.
+   - Bifurcación eléctrica hacia hasta 2 objetivos secundarios en un radio de 5.5 metros.
 
-2. **Atajos de Teclado y HUD (`player.gd`, `HUD.tscn`, `hud.gd`)**:
-   - Integración nativa de teclas `1` a `9` (`KEY_1` .. `KEY_9`) y combinaciones ergonómicas alternativas (`[T]` para slot 7, `[R]` para slot 8, `[C]` para slot 9).
-   - Inclusión de los 9 slots en la barra inferior con badges claros de acceso rápido y tooltips detallados con el nombre, costo de maná y descripción funcional en una sola línea.
+2. **Escudo Mágico y Shader Fresnel (`shaders/fresnel_shield.gdshader`)**:
+   - Domo esférico con shader Fresnel reactivo a impactos (`hit_intensity`).
+   - Las pruebas automatizadas verifican la atenuación alfa tanto en `StandardMaterial3D` como en `ShaderMaterial`.
 
-3. **Conflicto de Interacción (`KEY_E`)**:
-   - Desacoplado el uso de consumibles del botón de interacción de mundo.
-   - `KEY_E`: Acción unificada de interacción contextual de máxima prioridad con el objeto interactuable más cercano (`WorldItem`, `AncientAltar`, `FruitTree`) consumiendo el evento con `get_viewport().set_input_as_handled()`.
-   - `KEY_Z`: Atajo exclusivo para pergamino / consumible de maná rápido (`KEY_Q` se conserva para pociones y manzanas de salud).
+3. **Fuente de Vida (`scripts/player.gd`)**:
+   - Bloqueo preventivo si `GameManager.player_health >= GameManager.player_max_health`.
+   - Muestra indicador flotante `💚 Vida completa` sin coste de maná ni activación de cooldown.
 
-4. **Validación Fuente de Vida**:
-   - La canalización y ejecución de *Fuente de Vida* evalúan preventivamente si la salud del jugador se encuentra al tope (`GameManager.player_health >= GameManager.player_max_health`).
-   - Se muestra retroalimentación visual (`💚 Vida completa`) y no se descuenta ningún punto de maná ni se activa cooldown innecesario.
+4. **Corrección de Trayectoria de Bola de Fuego (`scripts/fireball.gd`)**:
+   - Actualización explícita de `global_position = target_point` previa al llamado de `explode()` al completar la trayectoria parabólica, garantizando detonación exacta en el punto de impacto.
 
-5. **Retroalimentación de Estado en HUD**:
-   - El *Escudo Mágico* registra su duración en la barra de estados del HUD (`StatusIconBar`), mostrando la barra de tiempo restante.
-   - El *Teletransporte* genera feedback de llegada y origen con partículas de parpadeo violeta y número flotante `✨ PARPADEO`.
-
-6. **Sistema de Efectos Visuales (VFX) y Shaders (PARTE C)**:
-   - **Centella Arcana**: Núcleo cian, anillos orbitales contrarrotantes, estela de motas (`glow_soft.png`) y burst explosivo de chispas en estrella (`spark_star.png`). Luz dinámica con flicker de alta frecuencia.
-   - **Bola de Fuego**: Núcleo incandescente blanco-amarillo, manto esférico pulsante, estela de gotas de llama (`flame_tear.png`), explosión con chispas incandescentes y marca de quemadura persistente en el suelo (`smoke_noise.png`) que se disuelve en 3.5s.
-   - **Invocar Duende**: Círculo rúnico arcano en el suelo (`magic_circle_runes.png`) con giro dinámico, haz de luz vertical, motas ascendentes moradas (`light_mote.png`) y estallido mágico al aparecer el duende.
-   - **Onda Expansiva**: Anillo concéntrico brillante con adición luminosa, cúpula de energía y estallido radial de polvo y fragmentos (`dust_puff.png`).
-   - **Fuente de Vida**: Sello rúnico de naturaleza en esmeralda/oro (`magic_circle_runes.png`), pilar cilíndrico de luz suave y motas curativas ascendentes (`light_mote.png`).
-   - **Teletransporte**: Anillo de portal dimensional estilizado (`ring_sharp.png`), implosión y explosión de motas violetas (`spark_star.png`) y elongación dimensional transitoria del modelo del hechicero.
-   - **Proyectil de Hielo**: Núcleo cilíndrico de carámbano con giro axial, estela de copos de nieve (`snowflake_crystal.png`), impacto con fragmentos de hielo y aura de escarcha persistente en enemigos ralentizados.
-   - **Rayo Arcano**: Malla volumétrica de cinta 3D con doble capa (núcleo blanco + halo azul), ramificaciones secundarias, estallido de chispas eléctricas y bifurcación entre objetivos.
-   - **Escudo Mágico**: Domo esférico con shader spatial hexagonal Fresnel (`fresnel_shield.gdshader`), onda de choque reactiva al recibir impactos (`hit_intensity`), anillos giroscópicos y motas arcanas orbitales (`light_mote.png`).
-   - **Presupuesto de Rendimiento**: Todos los hechizos se mantienen estrictamente dentro del presupuesto de ≤150 partículas activas simultáneas a 60 FPS.
-
+5. **IA y Locomoción Enemiga (`scripts/enemy.gd`)**:
+   - Rango de detección calibrado en 22.0m para `SKELETON_ARCHER`.
+   - Desacople de rotación forzada durante la recarga de ataque en `FIRE_IMP`, permitiendo maniobras orbitales fluidas de kiting.
+   - Estado `CHASE` selectivo: congelamiento de avance solo para unidades cuerpo a cuerpo (`GOBLIN`, `SKELETON_SPEAR`), manteniendo movimiento táctico en enemigos a distancia.

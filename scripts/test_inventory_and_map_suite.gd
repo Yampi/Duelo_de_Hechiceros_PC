@@ -84,8 +84,14 @@ func _test_spell_repeat_materials() -> void:
 	
 	var sh2 = sh_scene.instantiate()
 	add_child(sh2)
-	var sh2_mesh_ov = sh2.get_node("ShieldMesh").material_override as StandardMaterial3D
-	var sh2_alpha = sh2_mesh_ov.albedo_color.a if sh2_mesh_ov else 0.0
+	var sh2_mesh_ov = sh2.get_node("ShieldMesh").material_override
+	var sh2_alpha: float = 0.0
+	if sh2_mesh_ov is StandardMaterial3D:
+		sh2_alpha = (sh2_mesh_ov as StandardMaterial3D).albedo_color.a
+	elif sh2_mesh_ov is ShaderMaterial:
+		var col = (sh2_mesh_ov as ShaderMaterial).get_shader_parameter("shield_color")
+		if col is Color:
+			sh2_alpha = col.a
 	assert_test(sh2_alpha >= 0.5, "ArcaneShield Sphere Visible on Repeat Cast", "Alpha: %.2f" % sh2_alpha)
 	sh2.queue_free()
 

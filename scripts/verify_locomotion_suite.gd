@@ -269,6 +269,7 @@ func test_monster_imp_circling():
 	root.add_child(imp)
 	imp.set_archetype(3) # FIRE_IMP
 	imp.global_position = Vector3(0, 0, 7) # In circling zone (5m to 9m)
+	imp.attack_timer = imp.attack_cooldown # Ensure imp is in active circling behavior
 	
 	var dummy = CharacterBody3D.new()
 	dummy.add_to_group("player")

@@ -36,11 +36,14 @@ func test_single_spell(spell_id: int) -> void:
 	var dummy = enemy_scene.instantiate()
 	test_root.add_child(dummy)
 	dummy.global_position = Vector3(0, 0, 4.0 if spell_id == 4 else 7.0)
+	dummy.move_speed = 0.0
+	dummy.attack_damage = 0.0
 	var enemy_initial_hp = dummy.current_health
 	
 	# Turn off mana regen temporarily for exact cost verification
 	var old_regen = GameManager.mana_regen_rate
 	GameManager.mana_regen_rate = 0.0
+	GameManager.player_max_mana = 100.0
 	GameManager.player_mana = 100.0
 	GameManager.player_health = 50.0
 	

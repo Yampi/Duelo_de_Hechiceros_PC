@@ -63,6 +63,9 @@ func is_point_visible(world_pos: Vector3) -> bool:
 
 func update_player_position(player_pos: Vector3) -> void:
 	var center = world_to_grid(player_pos)
+	if center == _last_player_cell and not _is_dirty:
+		return
+	
 	var cell_radius = int(ceil(REVEAL_RADIUS / CELL_SIZE)) # ~10 celdas
 	var r_sq = (REVEAL_RADIUS / CELL_SIZE) * (REVEAL_RADIUS / CELL_SIZE)
 	
@@ -85,6 +88,7 @@ func update_player_position(player_pos: Vector3) -> void:
 				explored_grid[idx] = 1
 	
 	_last_player_cell = center
+	_is_dirty = false
 	_update_fog_texture()
 
 func _update_fog_texture() -> void:

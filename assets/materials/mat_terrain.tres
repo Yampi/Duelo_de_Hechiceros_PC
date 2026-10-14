@@ -1,0 +1,22 @@
+[gd_resource type="ShaderMaterial" load_steps=8 format=3 uid="uid://mat_terrain_multibiome_01"]
+
+[ext_resource type="Shader" path="res://shaders/terrain.gdshader" id="1_shader"]
+[ext_resource type="Texture2D" path="res://assets/textures/grass/grass_diff.jpg" id="2_gdiff"]
+[ext_resource type="Texture2D" path="res://assets/textures/grass/grass_nor.jpg" id="3_gnor"]
+[ext_resource type="Texture2D" path="res://assets/textures/rock/rock_diff.jpg" id="4_rdiff"]
+[ext_resource type="Texture2D" path="res://assets/textures/rock/rock_nor.jpg" id="5_rnor"]
+[ext_resource type="Texture2D" path="res://assets/textures/stone/stone_diff.jpg" id="6_sdiff"]
+[ext_resource type="Texture2D" path="res://assets/textures/stone/stone_nor.jpg" id="7_snor"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_shader")
+shader_parameter/grass_diff = ExtResource("2_gdiff")
+shader_parameter/grass_nor = ExtResource("3_gnor")
+shader_parameter/rock_diff = ExtResource("4_rdiff")
+shader_parameter/rock_nor = ExtResource("5_rnor")
+shader_parameter/stone_diff = ExtResource("6_sdiff")
+shader_parameter/stone_nor = ExtResource("7_snor")
+shader_parameter/player_pos = Vector3(0, 0, 96)
+shader_parameter/reveal_radius = 20.0
+shader_parameter/enable_fog_of_war = true

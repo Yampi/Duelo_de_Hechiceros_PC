@@ -167,6 +167,10 @@ columns = 2
 layout_mode = 2
 text = "Pantalla Completa"
 
+[node name="CheckIsometric" type="CheckBox" parent="Center/Panel/VBox/GridVideo"]
+layout_mode = 2
+text = "Cámara 2.5D Isométrica [V]"
+
 [node name="CheckShake" type="CheckBox" parent="Center/Panel/VBox/GridVideo"]
 layout_mode = 2
 text = "Reducir Sacudidas (Camera Shake)"

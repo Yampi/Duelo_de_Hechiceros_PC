@@ -30,6 +30,10 @@ var aim_point: Vector3 = Vector3.ZERO
 var is_dead: bool = false
 var hurt_cooldown: float = 0.0
 
+@export var jump_velocity: float = 6.4
+var is_jumping: bool = false
+var was_on_floor: bool = true
+
 var is_channeling: bool = false
 var channel_timer: float = 0.0
 var total_channel_time: float = 0.0
@@ -83,9 +87,9 @@ var equipped_relics: Array[String] = []
 
 func _ready() -> void:
 	add_to_group("player")
-	floor_snap_length = 0.35
+	floor_snap_length = 0.5
 	floor_constant_speed = true
-	floor_max_angle = deg_to_rad(45.0)
+	floor_max_angle = deg_to_rad(48.0)
 	_apply_wizard_materials()
 	if anim_player:
 		anim_player.playback_default_blend_time = 0.15
@@ -148,9 +152,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.keycode == KEY_9:
 			select_spell_slot(9)
 		elif event.keycode == KEY_SPACE:
-			cast_teleport()
+			if is_on_floor():
+				jump()
+			else:
+				cast_teleport()
 		elif event.keycode == KEY_F:
-			cast_arcane_shield()
+			if not interact_nearest():
+				cast_arcane_shield()
 		elif event.keycode == KEY_R:
 			cast_lightning_bolt()
 		elif event.keycode == KEY_T:
@@ -203,7 +211,7 @@ func use_consumable_scroll() -> void:
 		GameManager.reagents_updated.emit()
 		_pulse_staff(Color(0.9, 0.2, 1.0), 0.8)
 
-func interact_nearest() -> void:
+func interact_nearest() -> bool:
 	var closest_interactable: Node = null
 	var min_dist: float = 99999.0
 	
@@ -252,6 +260,8 @@ func interact_nearest() -> void:
 		elif closest_interactable.has_method("gather"):
 			closest_interactable.gather(self)
 		get_viewport().set_input_as_handled()
+		return true
+	return false
 
 func select_spell_slot(slot: int) -> void:
 	if slot >= 1 and slot <= 9:
@@ -386,13 +396,24 @@ func _physics_process(delta: float) -> void:
 	# Update mouse aiming
 	update_aim_point()
 	
-	# Gravity and floor contact
+	# Gravity and floor contact with landing detection
 	var gravity = ProjectSettings.get_setting("physics/3d/default_gravity", 19.6)
-	if not is_on_floor():
+	var on_floor_now = is_on_floor()
+	if not on_floor_now:
 		velocity.y -= gravity * delta
 	else:
+		if not was_on_floor:
+			# Just landed
+			is_jumping = false
+			floor_snap_length = 0.5
+			var model_node = $Model if has_node("Model") else null
+			if model_node:
+				var tw = create_tween()
+				tw.tween_property(model_node, "scale:y", 0.0062, 0.07)
+				tw.tween_property(model_node, "scale:y", 0.0075, 0.12)
 		if velocity.y < 0.0:
 			velocity.y = -0.1
+	was_on_floor = on_floor_now
 	
 	# WASD 3D Camera Movement
 	var input_x = Input.get_axis("move_left", "move_right")
@@ -513,6 +534,8 @@ func update_aim_point() -> void:
 	var min_dist: float = 3.5
 	for enemy in get_tree().get_nodes_in_group("enemy"):
 		if is_instance_valid(enemy) and not enemy.get("is_dead"):
+			if GameManager.fog_of_war and not GameManager.fog_of_war.is_point_visible(enemy.global_position):
+				continue
 			var d = enemy.global_position.distance_to(aim_point)
 			if d < min_dist:
 				min_dist = d
@@ -697,6 +720,18 @@ func cast_teleport(deduct_mana: bool = true, from_slot: int = -1) -> void:
 		var mtween = create_tween()
 		mtween.tween_property(m, "scale", orig_s, 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	GameManager.spawn_damage_number(global_position, "✨ PARPADEO", Color(0.85, 0.45, 1.0), 1.0)
+
+func jump() -> void:
+	if not is_on_floor():
+		return
+	velocity.y = jump_velocity
+	is_jumping = true
+	floor_snap_length = 0.0
+	var model_node = $Model if has_node("Model") else null
+	if model_node:
+		var tw = create_tween()
+		tw.tween_property(model_node, "scale:y", 0.0088, 0.08)
+		tw.tween_property(model_node, "scale:y", 0.0075, 0.14)
 
 func cast_ice_projectile(deduct_mana: bool = true, from_slot: int = -1) -> void:
 	var slot = from_slot if from_slot != -1 else _find_slot_for_spell("ice_projectile")
@@ -887,9 +922,16 @@ func modulate_flash(c: Color) -> void:
 	if meshes_with_mat.size() > 0:
 		var tween = create_tween()
 		for child in meshes_with_mat:
-			var orig = child.material_override.albedo_color
-			child.material_override.albedo_color = c
-			tween.tween_property(child.material_override, "albedo_color", orig, 0.2)
+			if "albedo_color" in child.material_override:
+				var orig = child.material_override.albedo_color
+				child.material_override.albedo_color = c
+				tween.tween_property(child.material_override, "albedo_color", orig, 0.2)
+			elif child.material_override is ShaderMaterial:
+				var sm = child.material_override as ShaderMaterial
+				var orig = sm.get_shader_parameter("skin_color")
+				if orig != null:
+					sm.set_shader_parameter("skin_color", c)
+					tween.tween_method(func(val): sm.set_shader_parameter("skin_color", val), c, orig, 0.2)
 
 func die() -> void:
 	is_dead = true

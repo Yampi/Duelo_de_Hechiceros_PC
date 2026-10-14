@@ -1,6 +1,6 @@
 # Informe Maestro de QA y Regresión UI/UX — "Duelo de Hechiceros"
 
-* **Fecha de Ejecución:** 2026-10-11T17:12:35
+* **Fecha de Ejecución:** 2026-10-12T14:46:45
 * **Plataforma:** Windows x64 / Godot Engine 4.7.2 Forward+
 * **Total de Pruebas:** 36
 * **Pruebas Aprobadas:** 36

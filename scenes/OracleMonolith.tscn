@@ -1,0 +1,56 @@
+[gd_scene load_steps=8 format=3 uid="uid://oracle_monolith_scene_01"]
+
+[ext_resource type="Script" path="res://scripts/oracle_monolith.gd" id="1_oracle"]
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_detect"]
+height = 3.0
+radius = 3.2
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_monolith"]
+albedo_color = Color(0.22, 0.24, 0.28, 1)
+metallic = 0.2
+roughness = 0.7
+
+[sub_resource type="BoxMesh" id="BoxMesh_pillar"]
+material = SubResource("StandardMaterial3D_monolith")
+size = Vector3(0.8, 2.6, 0.8)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_runes"]
+shading_mode = 0
+albedo_color = Color(0.95, 0.82, 0.35, 1)
+
+[sub_resource type="TorusMesh" id="TorusMesh_ring"]
+material = SubResource("StandardMaterial3D_runes")
+inner_radius = 1.1
+outer_radius = 1.3
+
+[node name="OracleMonolith" type="Area3D" groups=["poi"]]
+collision_layer = 4
+collision_mask = 1
+script = ExtResource("1_oracle")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+shape = SubResource("CylinderShape3D_detect")
+
+[node name="PillarMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.3, 0)
+mesh = SubResource("BoxMesh_pillar")
+
+[node name="RunesMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+mesh = SubResource("TorusMesh_ring")
+
+[node name="OmniLight3D" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
+light_color = Color(0.95, 0.82, 0.35, 1)
+light_energy = 0.85
+omni_range = 3.6
+
+[node name="PromptLabel" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.0, 0)
+billboard = 1
+text = "[E] Consultar Inscripción Antigua"
+font_size = 32
+outline_size = 8
+outline_modulate = Color(0, 0, 0, 1)

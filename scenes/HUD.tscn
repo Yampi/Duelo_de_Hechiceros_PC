@@ -95,8 +95,8 @@ mouse_filter = 2
 [node name="ControlHints" type="PanelContainer" parent="."]
 offset_left = 16.0
 offset_top = 16.0
-offset_right = 260.0
-offset_bottom = 180.0
+offset_right = 264.0
+offset_bottom = 196.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_hint")
 
 [node name="VBox" type="VBoxContainer" parent="ControlHints"]
@@ -140,7 +140,8 @@ theme_override_constants/shadow_offset_y = 1
 theme_override_font_sizes/font_size = 11
 text = "• WASD: Mover (Shift: Correr)
 • Ratón: Apuntar | Clic Izq: Canalizar
-• Clic Der: Orbitar Cámara | Rueda: Zoom
+• Clic Der: Orbitar | Rueda: Zoom
+• [V]: Alternar Vista 3D / 2.5D
 • [1-9]: Hechizos | [F]: Escudo Arcano
 • [Q]: Poción Salud | [E]: Recolectar / Usar
 • [I]: Inventario | [C]: Taller | [G]: Grimorio | [M]: Mapa"

@@ -242,6 +242,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.keycode == KEY_H:
 			toggle_control_hints()
 			get_viewport().set_input_as_handled()
+		elif event.keycode == KEY_V:
+			toggle_camera_perspective()
+			get_viewport().set_input_as_handled()
 		elif event.keycode == KEY_ESCAPE:
 			if crafting_modal and crafting_modal.visible:
 				toggle_crafting()
@@ -540,6 +543,28 @@ func show_loot_toast(item_name: String, count: int, icon_tex: Texture2D = null, 
 	var toast = LootToastScene.instantiate()
 	loot_toast_container.add_child(toast)
 	toast.setup(item_name, count, icon_tex, border_col)
+
+func show_toast_message(msg: String, icon_tex: Texture2D = null, border_col: Color = UIConstants.GOLD_BASE) -> void:
+	if not loot_toast_container or not LootToastScene:
+		return
+	var am = get_node_or_null("/root/AudioManager")
+	if am and am.has_method("play_ui"):
+		am.play_ui("button_click")
+	var toast = LootToastScene.instantiate()
+	loot_toast_container.add_child(toast)
+	if toast.has_method("setup_message"):
+		toast.setup_message(msg, icon_tex, border_col)
+	else:
+		toast.setup(msg, 1, icon_tex, border_col)
+
+func toggle_camera_perspective() -> void:
+	var new_mode = 1 if SettingsManager.camera_mode == 0 else 0
+	SettingsManager.camera_mode = new_mode
+	SettingsManager.save_to_disk()
+	
+	var mode_name = "2.5D Isométrica (Fija)" if new_mode == 1 else "3D Libre (Tercera Persona)"
+	var accent_col = UIConstants.ARCANE_CYAN if new_mode == 1 else UIConstants.GOLD_BASE
+	show_toast_message("📷 " + mode_name, null, accent_col)
 
 func create_interaction_prompt(target_node: Node3D, text: String, key_str: String = "F", height: float = 1.2) -> InteractionPrompt:
 	var prompt = InteractionPromptScene.instantiate() as InteractionPrompt

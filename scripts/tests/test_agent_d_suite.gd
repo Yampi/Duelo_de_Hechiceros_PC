@@ -43,12 +43,18 @@ func _run_all_tests() -> void:
 	assert_test(CharacterAppearance.TRIM_COLORS.size() >= 5, "Catálogo de metales/hombreras tiene al menos 5 estilos")
 	assert_test(CharacterAppearance.GEM_COLORS.size() >= 5, "Catálogo de gemas tiene al menos 5 variantes")
 	assert_test(CharacterAppearance.EXPRESSION_STYLES.size() >= 4, "Catálogo de portes y expresión tiene al menos 4 estilos")
+	assert_test(CharacterAppearance.EYE_SHAPES.size() >= 5, "Catálogo de formas de ojos tiene al menos 5 geometrías")
+	assert_test(CharacterAppearance.HAIR_COLORS.size() >= 5, "Catálogo de tintes de cabello tiene al menos 5 colores")
+	assert_test(CharacterAppearance.BEARD_STYLES.size() >= 3, "Catálogo de estilos de barba tiene al menos 3 cortes")
 
 	# 2. Test Save & Load Persistence
 	var test_custom_cfg = {
 		"character_name": "Valerius el Rojo",
 		"skin_tone_idx": 1,
 		"eye_type_idx": 1,
+		"eye_shape_idx": 2, # Estrella Cósmica
+		"hair_color_idx": 1, # Negro Azabache
+		"beard_style_idx": 1, # Barba Recortada
 		"robe_color_idx": 1, # Pyromancer Crimson
 		"trim_color_idx": 2, # Bronce Titán
 		"staff_gem_idx": 1, # Inferno Rojo
@@ -61,6 +67,9 @@ func _run_all_tests() -> void:
 	assert_test(loaded_cfg["character_name"] == "Valerius el Rojo", "Persistencia recupera nombre personalizado correctamente")
 	assert_test(loaded_cfg["robe_color_idx"] == 1, "Persistencia recupera color de túnica personalizado")
 	assert_test(loaded_cfg["staff_gem_idx"] == 1, "Persistencia recupera gema de bastón personalizada")
+	assert_test(loaded_cfg["eye_shape_idx"] == 2, "Persistencia recupera forma de ojo personalizada")
+	assert_test(loaded_cfg["hair_color_idx"] == 1, "Persistencia recupera tinte de cabello personalizado")
+	assert_test(loaded_cfg["beard_style_idx"] == 1, "Persistencia recupera estilo de barba personalizado")
 	
 	# 3. Test Material Application on WizardModel
 	var model_scene = load("res://assets/characters/wizard/WizardModel.tscn")
@@ -75,8 +84,19 @@ func _run_all_tests() -> void:
 		if m.name == "Face":
 			face_mesh = m
 			break
-	assert_test(face_mesh != null and face_mesh.material_override != null, "Malla de Rostro (Face) recibe StandardMaterial3D personalizado")
-	if face_mesh and face_mesh.material_override is StandardMaterial3D:
+	assert_test(face_mesh != null and face_mesh.material_override != null, "Malla de Rostro (Face) recibe material de rostro personalizado")
+	if face_mesh and face_mesh.material_override is ShaderMaterial:
+		var face_mat = face_mesh.material_override as ShaderMaterial
+		var expected_skin = CharacterAppearance.SKIN_TONES[1]["color"]
+		var skin_param = face_mat.get_shader_parameter("skin_color")
+		var eye_param = face_mat.get_shader_parameter("eye_color")
+		var shape_param = face_mat.get_shader_parameter("eye_shape")
+		var hair_param = face_mat.get_shader_parameter("hair_color")
+		assert_test(skin_param != null and skin_param.is_equal_approx(expected_skin), "Color de piel del rostro coincide con tono seleccionado")
+		assert_test(eye_param != null and face_mat.get_shader_parameter("eye_emission_energy") > 0.0, "Emisión ocular en rostro activada según estilo místico")
+		assert_test(shape_param == 2, "Forma de ojo en shader coincide con Estrella Cósmica")
+		assert_test(hair_param != null and hair_param.is_equal_approx(CharacterAppearance.HAIR_COLORS[1]["color"]), "Tinte capilar en shader coincide con Negro Azabache")
+	elif face_mesh and face_mesh.material_override is StandardMaterial3D:
 		var face_mat = face_mesh.material_override as StandardMaterial3D
 		var expected_skin = CharacterAppearance.SKIN_TONES[1]["color"]
 		assert_test(face_mat.albedo_color.is_equal_approx(expected_skin), "Color de piel del rostro coincide con tono seleccionado")

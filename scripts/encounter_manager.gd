@@ -11,14 +11,19 @@ const MAX_ACTIVE_ENEMIES: int = 10
 const MAX_LOCAL_ENEMIES_NEARBY: int = 3
 const ENCOUNTER_RESPAWN_COOLDOWN: float = 150.0
 const ENEMY_SCENE: PackedScene = preload("res://scenes/Enemy.tscn")
+const RIVAL_WIZARD_SCENE: PackedScene = preload("res://scenes/RivalWizard.tscn")
 
 var encounters: Array[Dictionary] = []
 var active_enemies: Array[CharacterBody3D] = []
 var current_zone: int = MapConfig.ZoneId.PRADERA_INICIAL
 var player_ref: Node3D = null
 
-func _ready() -> void:
+func _init() -> void:
 	_init_encounter_database()
+
+func _ready() -> void:
+	if encounters.is_empty():
+		_init_encounter_database()
 
 func set_player(p: Node3D) -> void:
 	player_ref = p
@@ -184,6 +189,22 @@ func _init_encounter_database() -> void:
 		"spawned": []
 	})
 	encounters.append({
+		"id": "z4_rival_wizard_duel",
+		"zone": MapConfig.ZoneId.RUINAS_ARCANAS,
+		"pos": Vector3(0.0, 0.0, -84.0), # Avenue of Columns
+		"archetypes": [],
+		"count": 1,
+		"trigger_dist": 26.0,
+		"min_dist": 15.0,
+		"is_unique": true,
+		"is_cleared": false,
+		"is_triggered": false,
+		"cooldown": 999.0,
+		"timer": 0.0,
+		"spawned": [],
+		"is_rival_duel": true
+	})
+	encounters.append({
 		"id": "z4_portal_boss",
 		"zone": MapConfig.ZoneId.RUINAS_ARCANAS,
 		"pos": MapConfig.BOSS_ALTAR_POS, # Boss altar at -98m
@@ -258,18 +279,20 @@ func _process_single_encounter(enc: Dictionary, p_pos: Vector3, delta: float) ->
 	if zone_diff < 0 or zone_diff > 1:
 		return
 	
-	var dist = p_pos.distance_to(enc["pos"])
+	var dist = Vector2(p_pos.x - enc["pos"].x, p_pos.z - enc["pos"].z).length()
 	if dist <= enc["trigger_dist"]:
-		# Local density check: prevent dogpiles if player is already engaged with >= 3 enemies nearby
-		var nearby_active_count = 0
-		for e in active_enemies:
-			if is_instance_valid(e) and not e.is_queued_for_deletion() and not e.get("is_dead"):
-				if p_pos.distance_to(e.global_position) <= 28.0:
-					nearby_active_count += 1
-		if nearby_active_count >= 3:
-			return
+		var is_boss_encounter = enc["id"] == "z4_portal_boss" or enc.get("is_rival_duel", false)
+		if not is_boss_encounter:
+			# Local density check: prevent dogpiles if player is already engaged with >= 3 enemies nearby
+			var nearby_active_count = 0
+			for e in active_enemies:
+				if is_instance_valid(e) and not e.is_queued_for_deletion() and not e.get("is_dead"):
+					if Vector2(p_pos.x - e.global_position.x, p_pos.z - e.global_position.z).length() <= 28.0:
+						nearby_active_count += 1
+			if nearby_active_count >= 3:
+				return
 		
-		if active_enemies.size() + enc["count"] <= MAX_ACTIVE_ENEMIES:
+		if is_boss_encounter or (active_enemies.size() + enc["count"] <= MAX_ACTIVE_ENEMIES):
 			_spawn_encounter_group(enc)
 
 func _spawn_encounter_group(enc: Dictionary) -> void:
@@ -280,6 +303,19 @@ func _spawn_encounter_group(enc: Dictionary) -> void:
 	var is_bridge_enc = enc["id"] == "z3_bridge_ambush"
 	var is_clearing_enc = enc["id"] == "z2_east_clearing_guardian"
 	var is_z1_scout = enc["id"] in ["z1_scout_east", "z1_scout_west"]
+	
+	if enc.get("is_rival_duel", false):
+		boss_encounter_started.emit()
+		var rival = RIVAL_WIZARD_SCENE.instantiate() as CharacterBody3D
+		var spawn_pos = center
+		spawn_pos.y = MapConfig.get_height_at(spawn_pos.x, spawn_pos.z)
+		get_parent().add_child(rival)
+		rival.global_position = spawn_pos
+		enc["spawned"].append(rival)
+		active_enemies.append(rival)
+		GameManager.spawn_damage_number(center + Vector3(0, 2.0, 0), "⚔️ ¡DUELO ARCANO: ARCHIMAGO MALAKOR!", Color(1.0, 0.1, 0.3), 1.5)
+		encounter_started.emit(enc["id"], 1)
+		return
 	
 	if is_boss_enc:
 		boss_encounter_started.emit()
