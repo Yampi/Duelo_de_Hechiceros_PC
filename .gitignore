@@ -1,26 +1,71 @@
-# Godot 4 .gitignore
+# Godot 4 & IDE Cache / Builds
 .godot/
-*.translation
+.import/
+build/
+export/
+exports/
+.vscode/
+.idea/
 
-# Tools & Engine binaries
-tools/*.exe
-tools/*.zip
+# Metadata & Import Caches
+*.import
+*.uid
+*.translation
+export_presets.cfg
+*.anim
+*.res
+*.bak
+
+# Binaries, Executables & Archives
 *.exe
 *.zip
-
-# Retro Reference Data / Disc Images (keep in place, do not track in git)
-C/
-CD/
-DOSBOX/
+*.bin
+*.pck
 *.img
 *.iso
 *.ccd
 *.sub
 *.cue
+tools/*.exe
+tools/*.zip
 
-# Captures and logs
+# Retro Reference Data / Disc Images
+C/
+CD/
+DOSBOX/
+
+# Multimedia & Heavy Asset Directories
+assets/
+imagenes de referencia/
 screenshots/
+docs/enemy_renders/
+docs/new_quaternius_enemies/
+docs/quaternius_renders/
+docs/creator_test/
 docs/ui_captures/
 docs/vfx_captures/
+
+# Multimedia & Image/Audio Files
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.svg
+*.wav
+*.ogg
+*.mp3
+*.ttf
+*.otf
+*.ico
+
+# 3D Models & Rigs
+*.glb
+*.gltf
+*.fbx
+*.blend
+*.obj
+*.mtl
+
+# Logs & Temp files
 *.log
 *.tmp
